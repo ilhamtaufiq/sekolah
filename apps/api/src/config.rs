@@ -7,6 +7,8 @@ pub struct Config {
     pub jwt_ttl_hours: i64,
     pub bind_addr: String,
     pub run_migrations: bool,
+    /// Folder lampiran LMS. Berkas tidak pernah disajikan sebagai static file.
+    pub upload_dir: std::path::PathBuf,
 }
 
 impl Config {
@@ -25,6 +27,7 @@ impl Config {
                 .context("JWT_TTL_HOURS harus angka")?,
             bind_addr: env_or("BIND_ADDR", "0.0.0.0:8080"),
             run_migrations: env_or("RUN_MIGRATIONS", "true") == "true",
+            upload_dir: std::path::PathBuf::from(env_or("UPLOAD_DIR", "./uploads")),
         })
     }
 }

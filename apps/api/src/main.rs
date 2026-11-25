@@ -6,6 +6,7 @@ mod db;
 mod error;
 mod grades;
 mod health;
+mod lms;
 mod report_format;
 mod router;
 mod state;
@@ -42,6 +43,7 @@ async fn main() -> Result<()> {
                 pool,
                 keys: Arc::new(JwtKeys::new(&cfg.jwt_secret)?),
                 jwt_ttl_hours: cfg.jwt_ttl_hours,
+                upload_dir: cfg.upload_dir.clone(),
             };
             serve(&cfg.bind_addr, state).await
         }
