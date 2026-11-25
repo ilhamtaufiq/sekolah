@@ -23,6 +23,11 @@ function HomeRoute() {
   if (user?.role === "siswa") return <Navigate to="/ruang-kelas" replace />;
   return <DashboardPage />;
 }
+import { BankPage } from "./features/exams/BankPage";
+import { ExamsPage } from "./features/exams/ExamsPage";
+import { ExamDetailPage } from "./features/exams/ExamDetailPage";
+import { StudentExamsPage } from "./features/exams/StudentExamsPage";
+import { TakeExamPage } from "./features/exams/TakeExamPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -58,6 +63,11 @@ export function App() {
           <Route path="ruang-kelas" element={<RoomsPage />} />
           <Route path="ruang-kelas/:id" element={<RoomPage />} />
           <Route path="tugas/:id" element={<TaskPage />} />
+          <Route path="bank-soal" element={<BankPage />} />
+          <Route path="ujian" element={<ExamsPage />} />
+          <Route path="ujian/:id" element={<ExamDetailPage />} />
+          <Route path="ujian-saya" element={<StudentExamsPage />} />
+          <Route path="kerjakan/:attemptId" element={<TakeExamPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

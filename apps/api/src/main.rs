@@ -5,6 +5,7 @@ mod config;
 mod db;
 mod error;
 mod grades;
+mod exams;
 mod health;
 mod lms;
 mod report_format;
