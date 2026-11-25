@@ -1,10 +1,11 @@
 use axum::{
     Router,
+    extract::DefaultBodyLimit,
     routing::{delete, get, post, put},
 };
 use tower_http::trace::TraceLayer;
 
-use crate::{academic, auth, health, report_format, state::AppState};
+use crate::{academic, auth, health, lms, report_format, state::AppState};
 
 pub fn build(state: AppState) -> Router {
     Router::new()
@@ -88,6 +89,33 @@ pub fn build(state: AppState) -> Router {
             get(academic::attendance::get_session),
         )
         .route("/api/dashboard/summary", get(academic::dashboard::summary))
+        // LMS (F4)
+        .route("/api/lms/rooms", get(lms::rooms))
+        .route(
+            "/api/lms/rooms/{id}/materials",
+            get(lms::materials::list).post(lms::materials::create),
+        )
+        .route("/api/lms/materials/{id}", delete(lms::materials::delete))
+        .route(
+            "/api/lms/materials/{id}/files",
+            post(lms::materials::upload)
+                .layer(DefaultBodyLimit::max(lms::storage::MAX_REQUEST_BYTES)),
+        )
+        .route(
+            "/api/lms/rooms/{id}/tasks",
+            get(lms::tasks::list).post(lms::tasks::create),
+        )
+        .route("/api/lms/tasks/{id}", get(lms::tasks::detail))
+        .route(
+            "/api/lms/tasks/{id}/submission",
+            put(lms::tasks::submit).layer(DefaultBodyLimit::max(lms::storage::MAX_REQUEST_BYTES)),
+        )
+        .route("/api/lms/submissions/{id}/grade", put(lms::tasks::grade))
+        .route(
+            "/api/lms/rooms/{id}/announcements",
+            get(lms::announcements::list).post(lms::announcements::create),
+        )
+        .route("/api/lms/files/{id}", get(lms::download))
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }

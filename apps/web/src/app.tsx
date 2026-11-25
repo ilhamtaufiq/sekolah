@@ -12,6 +12,15 @@ import { StudentsPage } from "./features/academic/StudentsPage";
 import { StaffPage } from "./features/academic/StaffPage";
 import { SchedulePage } from "./features/academic/SchedulePage";
 import { AttendancePage } from "./features/academic/AttendancePage";
+import { RoomsPage, RoomPage } from "./features/lms/RoomsPage";
+import { TaskPage } from "./features/lms/TaskPage";
+
+/** Siswa tidak punya beranda admin; langsung ke ruang kelas. */
+function HomeRoute() {
+  const { user } = useAuth();
+  if (user?.role === "siswa") return <Navigate to="/ruang-kelas" replace />;
+  return <DashboardPage />;
+}
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -32,7 +41,7 @@ export function App() {
             </RequireAuth>
           }
         >
-          <Route index element={<DashboardPage />} />
+          <Route index element={<HomeRoute />} />
           <Route path="tahun-ajaran" element={<YearsPage />} />
           <Route path="mapel" element={<SubjectsPage />} />
           <Route path="kelas" element={<ClassesPage />} />
@@ -42,6 +51,9 @@ export function App() {
           <Route path="jadwal" element={<SchedulePage />} />
           <Route path="absensi" element={<AttendancePage />} />
           <Route path="pengaturan/format-raport" element={<FormatSettingsPage />} />
+          <Route path="ruang-kelas" element={<RoomsPage />} />
+          <Route path="ruang-kelas/:id" element={<RoomPage />} />
+          <Route path="tugas/:id" element={<TaskPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

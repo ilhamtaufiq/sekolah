@@ -15,6 +15,7 @@ const nav = [
   { to: "/jadwal", label: "Jadwal", roles: STAFF },
   { to: "/absensi", label: "Absensi", roles: STAFF },
   { to: "/pengaturan/format-raport", label: "Format raport", roles: STAFF },
+  { to: "/ruang-kelas", label: "Ruang kelas", roles: [...STAFF, "siswa"] },
 ];
 
 export function AppShell() {
