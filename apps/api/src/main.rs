@@ -1,3 +1,4 @@
+mod academic;
 mod auth;
 mod cli;
 mod config;
@@ -7,6 +8,7 @@ mod health;
 mod report_format;
 mod router;
 mod state;
+mod validate;
 
 use std::sync::Arc;
 

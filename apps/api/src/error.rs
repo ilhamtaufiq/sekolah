@@ -46,6 +46,28 @@ impl From<sqlx::Error> for AppError {
     }
 }
 
+impl AppError {
+    /// Memetakan error database ke respons yang bermakna.
+    /// 1062 = duplikat (unique key). 1451/1452 = data terikat relasi lain (FK).
+    /// Nomor error MySQL dibaca langsung; kode SQLSTATE (23000) terlalu umum.
+    pub fn from_db(err: sqlx::Error, conflict: &str) -> Self {
+        if let sqlx::Error::Database(db) = &err
+            && let Some(mysql) = db.try_downcast_ref::<sqlx::mysql::MySqlDatabaseError>()
+        {
+            match mysql.number() {
+                1062 => return AppError::Conflict(conflict.to_string()),
+                1451 | 1452 => {
+                    return AppError::Conflict(format!(
+                        "{conflict} (data masih dipakai atau tidak valid)"
+                    ));
+                }
+                _ => {}
+            }
+        }
+        AppError::Internal(err.into())
+    }
+}
+
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, code, details) = match &self {
