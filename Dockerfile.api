@@ -1,0 +1,32 @@
+# syntax=docker/dockerfile:1
+# Build context: root repo. Dibuat multi-stage dengan cargo-chef agar dependency ter-cache.
+
+FROM rust:1-bookworm AS chef
+RUN cargo install cargo-chef --locked
+WORKDIR /app
+
+FROM chef AS planner
+COPY apps/api/ ./
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM chef AS builder
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
+COPY apps/api/ ./
+RUN cargo build --release --bin simas-api
+
+FROM debian:bookworm-slim AS runtime
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates curl \
+ && rm -rf /var/lib/apt/lists/* \
+ && useradd --system --uid 10001 --no-create-home app
+COPY --from=builder /app/target/release/simas-api /usr/local/bin/simas-api
+
+ENV BIND_ADDR=0.0.0.0:8080 \
+    RUN_MIGRATIONS=true \
+    RUST_LOG=simas_api=info,tower_http=info
+USER app
+EXPOSE 8080
+HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
+  CMD curl -fsS http://127.0.0.1:8080/healthz || exit 1
+ENTRYPOINT ["/usr/local/bin/simas-api"]

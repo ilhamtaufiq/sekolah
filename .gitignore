@@ -1,0 +1,18 @@
+# Rust
+apps/api/target/
+
+# Node
+node_modules/
+apps/web/dist/
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# Scratch
+*.log
+e2e/*.png
+put1.json
+bad.json
+apps/web/*.tsbuildinfo

@@ -1,0 +1,18 @@
+# syntax=docker/dockerfile:1
+# Build context: root repo.
+
+FROM node:22-alpine AS build
+RUN corepack enable
+WORKDIR /app
+COPY apps/web/package.json apps/web/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY apps/web/ ./
+RUN pnpm build
+
+FROM nginx:1.27-alpine AS runtime
+# API_UPSTREAM = alamat internal service API, mis. "simas-api:8080"
+ENV API_UPSTREAM=api:8080
+COPY deploy/nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 80
+HEALTHCHECK --interval=15s --timeout=3s CMD wget -qO- http://127.0.0.1/ >/dev/null || exit 1

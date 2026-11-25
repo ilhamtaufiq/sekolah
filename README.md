@@ -1,0 +1,56 @@
+# SIMAS — Sistem Informasi Manajemen Sekolah
+
+Multi-tenant: satu deployment melayani banyak sekolah. Setiap sekolah diidentifikasi dengan `slug` dan semua datanya terpisah lewat `school_id` yang diambil dari token, bukan dari input klien.
+
+## Struktur
+
+```
+apps/api/       Backend Rust (Axum, SQLx, PostgreSQL)
+apps/web/       Frontend React + Vite + Tailwind
+Dockerfile.api  Image API (multi-stage, cargo-chef)
+Dockerfile.web  Image web (build Vite, disajikan nginx, meneruskan /api)
+deploy/         Compose lokal, konfigurasi nginx, panduan Coolify
+```
+
+## Modul yang sudah ada
+
+- Login dan sesi berbasis JWT, dengan RBAC (admin, kepala sekolah, guru, wali kelas, siswa, orang tua)
+- Pengaturan format raport: kop, halaman, penilaian, predikat, urutan bagian, tanda tangan
+  - Versi terus bertambah, dengan deteksi konflik (409) saat dua admin mengedit bersamaan
+  - Riwayat perubahan dan pemulihan (restore) yang membuat versi baru
+
+## Menjalankan lokal
+
+Stack lengkap dengan Docker:
+
+```bash
+docker compose -f deploy/docker-compose.yml up --build
+# web: http://localhost:8081
+```
+
+Pengembangan terpisah:
+
+```bash
+# Backend (perlu PostgreSQL di localhost:5432, lihat .env.example)
+cd apps/api && cargo run -- serve
+
+# Frontend (dev server meneruskan /api ke localhost:8080)
+cd apps/web && pnpm install && pnpm dev
+```
+
+Membuat sekolah dan admin pertama:
+
+```bash
+cd apps/api
+cargo run -- create-school --slug sdn-1 --name "SD Negeri 1 Contoh"
+cargo run -- create-user --school sdn-1 --email admin@sdn1.sch.id --name "Admin" --password "password-minimal-8"
+```
+
+## Tes
+
+```bash
+cd apps/api && cargo test          # unit test validasi format raport
+cd apps/web && pnpm typecheck && pnpm build
+```
+
+Deploy produksi: lihat [`deploy/coolify.md`](deploy/coolify.md).

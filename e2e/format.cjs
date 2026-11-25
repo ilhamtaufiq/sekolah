@@ -1,0 +1,32 @@
+const { chromium } = require("playwright");
+const SS = "/home/user/simas/e2e";
+(async () => {
+  const browser = await chromium.launch();
+  const errors = [];
+  const run = async (name, viewport, scale) => {
+    const ctx = await browser.newContext({ viewport, deviceScaleFactor: scale });
+    const page = await ctx.newPage();
+    page.on("console", (m) => { if (m.type() === "error") errors.push(`[${name}] ${m.text()}`); });
+    page.on("pageerror", (e) => errors.push(`[${name}] pageerror ${e.message}`));
+    await page.goto("http://localhost:5173/pengaturan/format-raport");
+    await page.waitForURL(/\/login/);
+    await page.getByLabel("Kode sekolah").fill("sdn-1");
+    await page.getByLabel("Email").fill("admin@sdn1.sch.id");
+    await page.getByLabel("Password").fill("rahasia-123");
+    await page.getByRole("button", { name: "Masuk" }).click();
+    await page.waitForURL("http://localhost:5173/");
+    await page.goto("http://localhost:5173/pengaturan/format-raport");
+    await page.getByRole("heading", { name: "Format raport" }).waitFor();
+    await page.getByText("Pratinjau").waitFor();
+    await page.screenshot({ path: `${SS}/${name}.png`, fullPage: true });
+    return page;
+  };
+  const desktop = await run("desktop", { width: 1360, height: 900 }, 1);
+  await desktop.getByLabel("KKM").fill("72");
+  await desktop.getByRole("button", { name: /Simpan sebagai v3/ }).click();
+  await desktop.getByText("Pengaturan disimpan sebagai v3").waitFor({ timeout: 8000 });
+  console.log("SAVE OK: v3 tersimpan");
+  await run("mobile", { width: 390, height: 844 }, 2);
+  await browser.close();
+  console.log("ERRORS:", errors.length ? errors.join("\n") : "none");
+})().catch((e) => { console.error("E2E FAILED:", e.message); process.exit(1); });
