@@ -188,3 +188,66 @@ pub async fn update(
         status: c.status,
     }))
 }
+
+#[derive(Deserialize)]
+pub struct AccountInput {
+    pub email: String,
+    pub password: String,
+}
+
+/// Membuat akun login siswa. Hanya admin. Satu siswa paling banyak satu akun.
+pub async fn create_account(
+    State(st): State<AppState>,
+    user: AuthUser,
+    Path(id): Path<Uuid>,
+    Json(input): Json<AccountInput>,
+) -> AppResult<Json<serde_json::Value>> {
+    require_role(&user, MASTER_WRITE)?;
+
+    let mut v = Validator::new();
+    let email = v.text("email", &input.email, 5, 255).to_lowercase();
+    v.require(email.contains('@'), "email", "format email tidak valid");
+    v.require(
+        input.password.chars().count() >= 8,
+        "password",
+        "minimal 8 karakter",
+    );
+    v.finish()?;
+
+    let (name, existing): (String, Option<Uuid>) =
+        sqlx::query_as("SELECT name, user_id FROM students WHERE id = ? AND school_id = ?")
+            .bind(id)
+            .bind(user.school_id)
+            .fetch_optional(&st.pool)
+            .await?
+            .ok_or(AppError::NotFound)?;
+    if existing.is_some() {
+        return Err(AppError::Conflict("siswa ini sudah punya akun".to_string()));
+    }
+
+    let account_id = Uuid::new_v4();
+    let hash = crate::auth::hash_password(&input.password).map_err(AppError::Internal)?;
+    let mut tx = st.pool.begin().await?;
+    sqlx::query(
+        "INSERT INTO users (id, school_id, email, name, password_hash, role) VALUES (?, ?, ?, ?, ?, 'siswa')",
+    )
+    .bind(account_id)
+    .bind(user.school_id)
+    .bind(&email)
+    .bind(&name)
+    .bind(&hash)
+    .execute(&mut *tx)
+    .await
+    .map_err(|e| AppError::from_db(e, "email sudah terdaftar di sekolah ini"))?;
+    sqlx::query("UPDATE students SET user_id = ? WHERE id = ? AND school_id = ?")
+        .bind(account_id)
+        .bind(id)
+        .bind(user.school_id)
+        .execute(&mut *tx)
+        .await?;
+    tx.commit().await?;
+
+    Ok(Json(
+        serde_json::json!({ "user_id": account_id, "email": email }),
+    ))
+}

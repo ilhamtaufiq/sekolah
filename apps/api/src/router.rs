@@ -55,6 +55,10 @@ pub fn build(state: AppState) -> Router {
         )
         .route("/api/students/{id}", put(academic::students::update))
         .route(
+            "/api/students/{id}/account",
+            post(academic::students::create_account),
+        )
+        .route(
             "/api/users",
             get(academic::users::list).post(academic::users::create),
         )
