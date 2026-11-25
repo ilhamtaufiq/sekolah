@@ -45,16 +45,19 @@ export function VideoPlayer({
   youtubeId,
   token,
   track,
+  onChange,
 }: {
   materialId: string;
   youtubeId: string;
   token: string | null;
   track: boolean;
+  onChange?: () => void;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const timerRef = useRef<number | null>(null);
   const trackRef = useRef(track);
+  const onChangeRef = useRef(onChange);
   const tokenRef = useRef(token);
   const [progress, setProgress] = useState<Progress | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +65,8 @@ export function VideoPlayer({
   useEffect(() => {
     trackRef.current = track;
     tokenRef.current = token;
-  }, [track, token]);
+    onChangeRef.current = onChange;
+  }, [track, token, onChange]);
 
   useEffect(() => {
     if (!track) return;
@@ -85,7 +89,10 @@ export function VideoPlayer({
         token: tokenRef.current,
         body: { position, duration },
       })
-        .then(setProgress)
+        .then((p) => {
+          setProgress(p);
+          onChangeRef.current?.();
+        })
         .catch(() => undefined);
     };
     const stopTimer = () => {

@@ -4,6 +4,7 @@ import { Alert, Button, Card, ErrorAlert, Field, Input, Table, cn } from "../../
 import { useAuth } from "../../lib/auth";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import { VideoPlayer } from "./VideoPlayer";
+import { LessonsSection } from "./LessonsSection";
 import { downloadFile, formatBytes, formatDateTime, type FileItem } from "./files";
 import { useToken } from "./useToken";
 
@@ -151,6 +152,7 @@ function MaterialsTab({ roomId, manage, token }: { roomId: string; manage: boole
       {notice && <Alert tone="warning">{notice}</Alert>}
       {downloadError && <Alert tone="error">{downloadError}</Alert>}
       {materials.data && materials.data.length === 0 && <p className="text-sm text-slate-500">Belum ada materi.</p>}
+      <LessonsSection roomId={roomId} materials={materials.data ?? []} manage={manage} />
       {manage && <VideoProgressSummary roomId={roomId} />}
       {materials.data?.map((m) => (
         <Card key={m.id} title={m.title} description={`${m.created_by_name} · ${formatDateTime(m.created_at)}`}

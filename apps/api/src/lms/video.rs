@@ -86,7 +86,7 @@ pub struct ProgressView {
     pub completed: bool,
 }
 
-fn view(watched: f64, duration: Option<f64>, completed: bool) -> ProgressView {
+pub(super) fn view(watched: f64, duration: Option<f64>, completed: bool) -> ProgressView {
     let percent = match duration {
         Some(d) if d > 0.0 => ((watched / d) * 100.0).min(100.0).round(),
         _ => 0.0,

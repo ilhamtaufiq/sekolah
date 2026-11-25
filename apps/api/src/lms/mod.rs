@@ -6,6 +6,7 @@
 //! - Lainnya: 403.
 
 pub mod announcements;
+pub mod lessons;
 pub mod materials;
 pub mod storage;
 pub mod tasks;

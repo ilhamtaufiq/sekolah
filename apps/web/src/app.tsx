@@ -30,6 +30,7 @@ import { StudentExamsPage } from "./features/exams/StudentExamsPage";
 import { TakeExamPage } from "./features/exams/TakeExamPage";
 import { PreviewExamPage } from "./features/exams/PreviewExamPage";
 import { MyReportsPage } from "./features/grades/MyReportsPage";
+import { LessonPage } from "./features/lms/LessonPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -70,6 +71,7 @@ export function App() {
           <Route path="ujian/:id" element={<ExamDetailPage />} />
           <Route path="ujian/:id/tes" element={<PreviewExamPage />} />
           <Route path="raport-saya" element={<MyReportsPage />} />
+          <Route path="pembelajaran/:id" element={<LessonPage />} />
           <Route path="ujian-saya" element={<StudentExamsPage />} />
           <Route path="kerjakan/:attemptId" element={<TakeExamPage />} />
         </Route>
