@@ -4,6 +4,7 @@ import { cn } from "./ui";
 
 const STAFF = ["admin", "kepala_sekolah", "guru", "wali_kelas"];
 const LEADERSHIP = ["admin", "kepala_sekolah"];
+const TEACHING = ["admin", "guru", "wali_kelas"];
 
 const nav = [
   { to: "/", label: "Beranda", roles: STAFF, end: true },
@@ -15,6 +16,9 @@ const nav = [
   { to: "/jadwal", label: "Jadwal", roles: STAFF },
   { to: "/absensi", label: "Absensi", roles: STAFF },
   { to: "/pengaturan/format-raport", label: "Format raport", roles: STAFF },
+  { to: "/bank-soal", label: "Bank soal", roles: TEACHING },
+  { to: "/ujian", label: "Ujian", roles: TEACHING },
+  { to: "/ujian-saya", label: "Ujian saya", roles: ["siswa"] },
 ];
 
 export function AppShell() {

@@ -24,6 +24,19 @@ deploy/         Compose lokal, konfigurasi nginx, panduan Coolify
   - Akun guru dan staf, penugasan guru per mapel, jadwal dengan cek bentrok
   - Absensi harian (wali kelas) dan per mapel (guru pengampu), dashboard ringkasan
 
+Ujian CBT (F5)
+  - Bank soal PG dan esai per mapel; soal yang sudah terbit di ujian tidak bisa diubah
+  - Paket ujian per penugasan: jendela waktu, durasi, acak soal dan opsi, token opsional
+  - Waktu dan batas submit ditentukan server (deadline + grace 30 detik); autosave per jawaban
+  - Penilaian PG otomatis, esai dinilai guru; analisis kesukaran dan daya beda
+  - Batasan: log pindah tab hanya jejak untuk guru, bukan penguncian browser
+
+Smoke test F5 (database uji sendiri; skrip memundurkan deadline lewat mysql):
+
+```bash
+SIMAS_DB=simas_f5 python3 apps/api/scripts/smoke_f5.py http://localhost:8085
+```
+
 Smoke test F2 (butuh API berjalan dan sekolah `sdn-1` dengan admin dari langkah di atas):
 
 ```bash

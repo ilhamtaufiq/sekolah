@@ -236,4 +236,17 @@ check("esai tidak punya analisis butir", essay_item["difficulty"] is None and es
 expect("siswa tidak bisa mengakses bank soal", call("GET", "/api/questions", dina["token"]), 403)
 expect("siswa tidak bisa membuat paket", call("POST", "/api/exams", dina["token"], exam_body("x", now, now + timedelta(hours=1))), 403)
 
+# Fixture untuk tes browser (e2e/f5-pages.cjs): akun dan id data uji.
+fixture = {
+    "guru_email": f"guru{tag}@sdn1.sch.id",
+    "guru_password": "guru-pass-1",
+    "student_email": students[0]["student"] and f"dina{tag}@sdn1.sch.id",
+    "student_password": "siswa-pass-1",
+    "assignment_id": assign["id"],
+    "subject_id": subj["id"],
+    "question_ids": [q_pg1["id"], q_essay["id"]],
+}
+with open(os.environ.get("SIMAS_FIXTURE", "/home/user/simas-scratch/f5-fixture.json"), "w") as f:
+    json.dump(fixture, f, indent=2)
+
 print(f"\nSEMUA LULUS: {PASSED} pemeriksaan")
