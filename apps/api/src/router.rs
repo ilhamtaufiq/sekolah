@@ -4,7 +4,7 @@ use axum::{
 };
 use tower_http::trace::TraceLayer;
 
-use crate::{academic, auth, health, report_format, state::AppState};
+use crate::{academic, auth, exams, health, report_format, state::AppState};
 
 pub fn build(state: AppState) -> Router {
     Router::new()
@@ -88,6 +88,55 @@ pub fn build(state: AppState) -> Router {
             get(academic::attendance::get_session),
         )
         .route("/api/dashboard/summary", get(academic::dashboard::summary))
+        // Ujian CBT (F5)
+        .route(
+            "/api/questions",
+            get(exams::questions::list).post(exams::questions::create),
+        )
+        .route(
+            "/api/questions/{id}",
+            put(exams::questions::update).delete(exams::questions::delete),
+        )
+        .route(
+            "/api/exams",
+            get(exams::manage::list).post(exams::manage::create),
+        )
+        .route(
+            "/api/exams/{id}",
+            get(exams::manage::get).put(exams::manage::update),
+        )
+        .route(
+            "/api/exams/{id}/questions",
+            put(exams::manage::set_questions),
+        )
+        .route("/api/exams/{id}/publish", post(exams::manage::publish))
+        .route("/api/exams/{id}/attempts", get(exams::manage::attempts))
+        .route("/api/exams/{id}/analysis", get(exams::manage::analysis))
+        .route(
+            "/api/attempts/{id}/answers/{question_id}/score",
+            put(exams::manage::grade_essay),
+        )
+        .route("/api/student/exams", get(exams::attempts::list))
+        .route(
+            "/api/student/exams/{id}/start",
+            post(exams::attempts::start),
+        )
+        .route(
+            "/api/student/attempts/{id}",
+            get(exams::attempts::get_attempt),
+        )
+        .route(
+            "/api/student/attempts/{id}/answers/{question_id}",
+            put(exams::attempts::save_answer),
+        )
+        .route(
+            "/api/student/attempts/{id}/events",
+            post(exams::attempts::record_event),
+        )
+        .route(
+            "/api/student/attempts/{id}/submit",
+            post(exams::attempts::submit),
+        )
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }
