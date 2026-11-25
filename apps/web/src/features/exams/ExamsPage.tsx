@@ -16,10 +16,11 @@ export function ExamsPage() {
   const [end, setEnd] = useState("");
   const [shuffleQ, setShuffleQ] = useState(true);
   const [shuffleO, setShuffleO] = useState(true);
-  const [token, setToken] = useState("");
+  const [withToken, setWithToken] = useState(true);
+  const [issued, setIssued] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const create = useApiMutation<void, ExamRow>(
+  const create = useApiMutation<void, ExamRow & { issued_token: string | null }>(
     {
       method: "POST",
       path: () => "/exams",
@@ -31,7 +32,7 @@ export function ExamsPage() {
         window_end: toIso(end),
         shuffle_questions: shuffleQ,
         shuffle_options: shuffleO,
-        token: token.trim() || null,
+        generate_token: withToken,
       }),
     },
     [["exams"]],
@@ -40,10 +41,11 @@ export function ExamsPage() {
   const onCreate = async (e: FormEvent) => {
     e.preventDefault();
     setNotice(null);
-    await create.mutateAsync();
+    setIssued(null);
+    const res = await create.mutateAsync();
+    setIssued(res.issued_token);
     setNotice(`Paket "${title}" dibuat sebagai draf. Susun soalnya lalu terbitkan.`);
     setTitle("");
-    setToken("");
   };
 
   return (
@@ -55,6 +57,11 @@ export function ExamsPage() {
       </header>
 
       <ErrorAlert error={create.error} />
+      {issued && (
+        <Alert tone="warning">
+          Token ujian: <span className="font-mono font-semibold">{issued}</span>. Catat dan bagikan ke siswa sekarang; token tidak bisa dilihat lagi setelah halaman ini ditutup.
+        </Alert>
+      )}
       {notice && <Alert tone="success">{notice}</Alert>}
 
       <Card title="Paket baru">
@@ -73,9 +80,10 @@ export function ExamsPage() {
           <Field label="Durasi (menit)" hint="1–600">
             <Input type="number" min={1} max={600} value={duration} onChange={(e) => setDuration(e.target.value)} required />
           </Field>
-          <Field label="Token ujian" hint="Opsional, 4–20 huruf/angka">
-            <Input value={token} onChange={(e) => setToken(e.target.value)} maxLength={20} />
-          </Field>
+          <label className="flex items-center gap-2 pt-7 text-sm">
+            <input type="checkbox" checked={withToken} onChange={(e) => setWithToken(e.target.checked)} className="size-4 rounded border-slate-300 text-brand-600" />
+            Token acak untuk siswa
+          </label>
           <Field label="Dibuka">
             <Input type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} required />
           </Field>

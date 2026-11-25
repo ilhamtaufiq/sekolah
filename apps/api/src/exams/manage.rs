@@ -62,6 +62,29 @@ pub struct ExamInput {
     /// Hapus token yang sudah ada.
     #[serde(default)]
     pub clear_token: bool,
+    /// Buat token acak baru (8 karakter). Token ditampilkan sekali di respons lalu hanya disimpan sebagai hash.
+    #[serde(default)]
+    pub generate_token: bool,
+}
+
+/// Respons create/update. `issued_token` hanya terisi saat token baru dibuat.
+#[derive(Serialize)]
+pub struct IssuedExam {
+    #[serde(flatten)]
+    pub exam: ExamRow,
+    pub issued_token: Option<String>,
+}
+
+const TOKEN_ALPHABET: &[u8] = b"ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const TOKEN_LEN: usize = 8;
+
+/// Token acak yang mudah dibacakan (tanpa huruf yang mirip: 0/O, 1/I/L).
+fn generate_token() -> String {
+    use rand::RngExt;
+    let mut rng = rand::rng();
+    (0..TOKEN_LEN)
+        .map(|_| TOKEN_ALPHABET[rng.random_range(0..TOKEN_ALPHABET.len())] as char)
+        .collect()
 }
 
 #[derive(Deserialize)]
@@ -258,9 +281,11 @@ pub async fn create(
     State(st): State<AppState>,
     user: AuthUser,
     Json(input): Json<ExamInput>,
-) -> AppResult<Json<ExamRow>> {
+) -> AppResult<Json<IssuedExam>> {
     require_role(&user, TEACH_ROLES)?;
-    let (title, token) = validate(&input)?;
+    let (title, manual) = validate(&input)?;
+    let issued_token = input.generate_token.then(generate_token);
+    let token = issued_token.clone().or(manual);
     ensure_assignment(&st.pool, &user, input.assignment_id).await?;
 
     let id = Uuid::new_v4();
@@ -282,7 +307,10 @@ pub async fn create(
     .execute(&st.pool)
     .await?;
 
-    Ok(Json(load_for_teacher(&st.pool, &user, id).await?))
+    Ok(Json(IssuedExam {
+        exam: load_for_teacher(&st.pool, &user, id).await?,
+        issued_token,
+    }))
 }
 
 pub async fn get(
@@ -329,7 +357,7 @@ pub async fn update(
     user: AuthUser,
     Path(id): Path<Uuid>,
     Json(input): Json<ExamInput>,
-) -> AppResult<Json<ExamRow>> {
+) -> AppResult<Json<IssuedExam>> {
     require_role(&user, TEACH_ROLES)?;
     let current = load_for_teacher(&st.pool, &user, id).await?;
     if current.status != "draft" {
@@ -337,7 +365,9 @@ pub async fn update(
             "paket yang sudah terbit tidak bisa diubah".to_string(),
         ));
     }
-    let (title, token) = validate(&input)?;
+    let (title, manual) = validate(&input)?;
+    let issued_token = input.generate_token.then(generate_token);
+    let token = issued_token.clone().or(manual);
     ensure_assignment(&st.pool, &user, input.assignment_id).await?;
 
     sqlx::query(
@@ -361,7 +391,10 @@ pub async fn update(
     .execute(&st.pool)
     .await?;
 
-    Ok(Json(load_for_teacher(&st.pool, &user, id).await?))
+    Ok(Json(IssuedExam {
+        exam: load_for_teacher(&st.pool, &user, id).await?,
+        issued_token,
+    }))
 }
 
 /// Mengganti daftar soal paket (hanya draf). Poin disalin dari bank soal saat ini.

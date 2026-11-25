@@ -23,17 +23,17 @@ export function ExamDetailPage() {
 
   const [picked, setPicked] = useState<string[] | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [newToken, setNewToken] = useState("");
+  const [issuedToken, setIssuedToken] = useState<string | null>(null);
   const isDraft = detail.data?.status === "draft";
   const selected = picked ?? detail.data?.questions.map((q) => q.question_id) ?? [];
 
   const invalidate = [["exam", id], ["exams"], ["exam-analysis", id]];
-  // Token tidak bisa dilihat ulang setelah disimpan. Mengganti token = mengirim token baru.
-  const saveToken = useApiMutation<{ token: string | null }, ExamDetail>(
+  // Token dibuat acak oleh server dan hanya tampil sekali di respons ini.
+  const saveToken = useApiMutation<{ clear: boolean }, ExamDetail & { issued_token: string | null }>(
     {
       method: "PUT",
       path: () => `/exams/${id}`,
-      body: ({ token }) => ({
+      body: ({ clear }) => ({
         assignment_id: detail.data?.assignment_id,
         title: detail.data?.title,
         duration_minutes: detail.data?.duration_minutes,
@@ -41,8 +41,8 @@ export function ExamDetailPage() {
         window_end: detail.data?.window_end,
         shuffle_questions: detail.data?.shuffle_questions,
         shuffle_options: detail.data?.shuffle_options,
-        token,
-        clear_token: token === null,
+        generate_token: !clear,
+        clear_token: clear,
       }),
     },
     invalidate,
@@ -103,26 +103,21 @@ export function ExamDetailPage() {
             )}
           </p>
           {isDraft && (
-            <form
-              className="flex flex-wrap items-end gap-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                saveToken.mutate({ token: newToken.trim() });
-                setNewToken("");
-              }}
-            >
-              <Field label="Token baru" hint="6–20 huruf atau angka">
-                <Input value={newToken} onChange={(e) => setNewToken(e.target.value)} maxLength={20} />
-              </Field>
-              <Button type="submit" variant="secondary" disabled={newToken.trim().length < 6 || saveToken.isPending}>
-                Simpan token
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="secondary" onClick={() => saveToken.mutate({ clear: false }, { onSuccess: (r) => setIssuedToken(r.issued_token) })} disabled={saveToken.isPending}>
+                Buat token acak baru
               </Button>
               {exam.token_state !== "none" && (
-                <Button type="button" variant="ghost" onClick={() => saveToken.mutate({ token: null })} disabled={saveToken.isPending}>
+                <Button type="button" variant="ghost" onClick={() => saveToken.mutate({ clear: true }, { onSuccess: () => setIssuedToken(null) })} disabled={saveToken.isPending}>
                   Hapus token
                 </Button>
               )}
-            </form>
+            </div>
+          )}
+          {issuedToken && (
+            <Alert tone="warning">
+              Token baru: <span className="font-mono font-semibold">{issuedToken}</span>. Catat sekarang; token tidak bisa dilihat lagi.
+            </Alert>
           )}
           <Link to={`/ujian/${id}/tes`} className="inline-block text-brand-700 hover:underline">
             Coba ujian (mode tes, tidak dikunci dan tidak dicatat) →

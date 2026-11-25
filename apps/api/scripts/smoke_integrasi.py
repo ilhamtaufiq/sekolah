@@ -157,6 +157,20 @@ expect("siswa tidak bisa memakai mode tes", call("GET", f"/api/exams/{exam['id']
 attempts = expect("daftar percobaan", call("GET", f"/api/exams/{exam['id']}/attempts", guru_token), 200)
 check("mode tes tidak membuat percobaan", attempts == [], str(attempts)[:200])
 
+# ---------- 2b. Token acak otomatis ----------
+rnd = expect("paket dengan token acak", call("POST", "/api/exams", guru_token, {
+    "assignment_id": asg["id"], "title": f"Acak {tag}", "duration_minutes": 20,
+    "window_start": iso(now - timedelta(minutes=5)), "window_end": iso(now + timedelta(hours=2)),
+    "shuffle_questions": False, "shuffle_options": False, "generate_token": True}), 200)
+issued = rnd["issued_token"]
+check("token acak 8 karakter tanpa huruf yang mirip", isinstance(issued, str) and len(issued) == 8
+      and all(c in "ABCDEFGHJKMNPQRSTUVWXYZ23456789" for c in issued), str(issued))
+check("token acak tidak ikut di respons lain", "issued_token" not in expect("detail paket acak", call("GET", f"/api/exams/{rnd['id']}", guru_token), 200))
+check("token acak tersimpan sebagai hash argon2", mysql(f"SELECT token_hash FROM exams WHERE id = UNHEX('{rnd['id'].replace('-', '')}')").startswith("$argon2"))
+expect("soal paket acak", call("PUT", f"/api/exams/{rnd['id']}/questions", guru_token, {"question_ids": [q["id"]]}), 200)
+expect("terbitkan paket acak", call("POST", f"/api/exams/{rnd['id']}/publish", guru_token), 200)
+expect("siswa masuk dengan token acak", call("POST", f"/api/student/exams/{rnd['id']}/start", siswa_token, {"token": issued}), 200)
+
 # ---------- 3. Raport saya ----------
 mine = expect("raport saya untuk siswa", call("GET", "/api/me/report-cards", siswa_token), 200)
 db_count = int(mysql(f"SELECT COUNT(*) FROM report_cards r JOIN students s ON s.id = r.student_id WHERE s.id = UNHEX('{hex_st}')"))
