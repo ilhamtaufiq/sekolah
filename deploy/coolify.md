@@ -4,7 +4,7 @@ Arsitektur produksi: hanya **web** (nginx) yang punya domain publik. Nginx mener
 
 ## 1. Database
 
-1. Di project Coolify, **+ New → Database → PostgreSQL 16**.
+1. Di project Coolify, **+ New → Database → MySQL 8.4** (atau MariaDB 11 bila lebih disukai; keduanya didukung).
 2. Catat nama host internal (mis. `simas-db-xyz`), user, password, dan nama database.
 3. Aktifkan **Backups**: jadwal harian, tujuan S3-compatible, retensi minimal 14 hari.
 
@@ -18,7 +18,7 @@ Arsitektur produksi: hanya **web** (nginx) yang punya domain publik. Nginx mener
 
    | Nama | Nilai |
    |---|---|
-   | `DATABASE_URL` | `postgres://<user>:<password>@<host-internal-db>:5432/<db>` |
+   | `DATABASE_URL` | `mysql://<user>:<password>@<host-internal-db>:3306/<db>` |
    | `JWT_SECRET` | hasil `openssl rand -hex 32` (simpan sebagai secret) |
    | `JWT_TTL_HOURS` | `8` |
    | `RUN_MIGRATIONS` | `true` |

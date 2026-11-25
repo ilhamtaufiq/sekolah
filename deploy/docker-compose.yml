@@ -1,25 +1,28 @@
 # Stack lokal lengkap: db + api + web. Jalankan: docker compose -f deploy/docker-compose.yml up --build
 services:
   db:
-    image: postgres:16-alpine
+    image: mysql:8.4
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
     environment:
-      POSTGRES_USER: simas
-      POSTGRES_PASSWORD: simas-dev
-      POSTGRES_DB: simas
-    ports: ["5432:5432"]
-    volumes: ["pgdata:/var/lib/postgresql/data"]
+      MYSQL_ROOT_PASSWORD: simas-root-dev
+      MYSQL_DATABASE: simas
+      MYSQL_USER: simas
+      MYSQL_PASSWORD: simas-dev
+    ports: ["3306:3306"]
+    volumes: ["dbdata:/var/lib/mysql"]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U simas -d simas"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-usimas", "-psimas-dev"]
       interval: 5s
       timeout: 3s
-      retries: 10
+      retries: 20
+      start_period: 20s
 
   api:
     build:
       context: ..
       dockerfile: Dockerfile.api
     environment:
-      DATABASE_URL: postgres://simas:simas-dev@db:5432/simas
+      DATABASE_URL: mysql://simas:simas-dev@db:3306/simas
       JWT_SECRET: dev-only-secret-change-me-please-32+chars
     depends_on:
       db:
@@ -35,4 +38,4 @@ services:
     depends_on: [api]
 
 volumes:
-  pgdata:
+  dbdata:

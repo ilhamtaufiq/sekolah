@@ -14,18 +14,19 @@ jobs:
     name: API (Rust)
     runs-on: ubuntu-latest
     services:
-      postgres:
-        image: postgres:16-alpine
+      mysql:
+        image: mysql:8.4
         env:
-          POSTGRES_USER: simas
-          POSTGRES_PASSWORD: simas-test
-          POSTGRES_DB: simas_test
-        ports: ["5432:5432"]
+          MYSQL_ROOT_PASSWORD: simas-root-test
+          MYSQL_DATABASE: simas_test
+          MYSQL_USER: simas
+          MYSQL_PASSWORD: simas-test
+        ports: ["3306:3306"]
         options: >-
-          --health-cmd "pg_isready -U simas -d simas_test"
-          --health-interval 5s --health-timeout 3s --health-retries 10
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -usimas -psimas-test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
     env:
-      DATABASE_URL: postgres://simas:simas-test@127.0.0.1:5432/simas_test
+      DATABASE_URL: mysql://simas:simas-test@127.0.0.1:3306/simas_test
       JWT_SECRET: ci-only-secret-with-more-than-32-characters
     defaults:
       run:

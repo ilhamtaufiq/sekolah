@@ -3,12 +3,12 @@
 //!   simas-api create-user --school sdn-1 --email admin@sdn1.sch.id --name "Admin" --password "..." [--role guru]
 
 use anyhow::{Context, Result, anyhow, bail};
-use sqlx::PgPool;
+use sqlx::MySqlPool;
 use uuid::Uuid;
 
 use crate::auth::{Role, hash_password};
 
-pub async fn create_school(pool: &PgPool, args: &[String]) -> Result<()> {
+pub async fn create_school(pool: &MySqlPool, args: &[String]) -> Result<()> {
     let slug = flag(args, "--slug")?.trim().to_lowercase();
     let name = flag(args, "--name")?.trim().to_string();
 
@@ -21,7 +21,8 @@ pub async fn create_school(pool: &PgPool, args: &[String]) -> Result<()> {
         bail!("slug harus 3–40 karakter: huruf kecil, angka, atau '-'");
     }
 
-    sqlx::query("INSERT INTO schools (slug, name) VALUES ($1, $2)")
+    sqlx::query("INSERT INTO schools (id, slug, name) VALUES (?, ?, ?)")
+        .bind(Uuid::new_v4())
         .bind(&slug)
         .bind(&name)
         .execute(pool)
@@ -32,7 +33,7 @@ pub async fn create_school(pool: &PgPool, args: &[String]) -> Result<()> {
     Ok(())
 }
 
-pub async fn create_user(pool: &PgPool, args: &[String]) -> Result<()> {
+pub async fn create_user(pool: &MySqlPool, args: &[String]) -> Result<()> {
     let slug = flag(args, "--school")?.trim().to_lowercase();
     let email = flag(args, "--email")?.trim().to_lowercase();
     let name = flag(args, "--name")?.trim().to_string();
@@ -45,7 +46,7 @@ pub async fn create_user(pool: &PgPool, args: &[String]) -> Result<()> {
         bail!("password minimal 8 karakter");
     }
 
-    let school_id: Uuid = sqlx::query_scalar("SELECT id FROM schools WHERE slug = $1")
+    let school_id: Uuid = sqlx::query_scalar("SELECT id FROM schools WHERE slug = ?")
         .bind(&slug)
         .fetch_optional(pool)
         .await?
@@ -53,8 +54,9 @@ pub async fn create_user(pool: &PgPool, args: &[String]) -> Result<()> {
 
     let hash = hash_password(&password)?;
     sqlx::query(
-        "INSERT INTO users (school_id, email, name, password_hash, role) VALUES ($1, $2, $3, $4, $5)",
+        "INSERT INTO users (id, school_id, email, name, password_hash, role) VALUES (?, ?, ?, ?, ?, ?)",
     )
+    .bind(Uuid::new_v4())
     .bind(school_id)
     .bind(&email)
     .bind(&name)

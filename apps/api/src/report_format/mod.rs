@@ -14,7 +14,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool};
+use sqlx::{FromRow, MySqlPool};
 use uuid::Uuid;
 
 use crate::{
@@ -118,9 +118,9 @@ pub async fn history(
         "SELECT h.version, h.action, u.name AS changed_by, h.changed_at, h.config \
          FROM report_format_history h \
          LEFT JOIN users u ON u.id = h.changed_by \
-         WHERE h.school_id = $1 \
+         WHERE h.school_id = ? \
          ORDER BY h.version DESC \
-         LIMIT $2",
+         LIMIT ?",
     )
     .bind(user.school_id)
     .bind(HISTORY_LIMIT)
@@ -152,7 +152,7 @@ pub async fn restore_version(
     require_role(&user, WRITE_ROLES)?;
 
     let raw: Option<serde_json::Value> = sqlx::query_scalar(
-        "SELECT config FROM report_format_history WHERE school_id = $1 AND version = $2",
+        "SELECT config FROM report_format_history WHERE school_id = ? AND version = ?",
     )
     .bind(user.school_id)
     .bind(version)
@@ -180,12 +180,12 @@ pub async fn restore_version(
 
 // ---------- Repository ----------
 
-async fn load_current(pool: &PgPool, school_id: Uuid) -> AppResult<FormatResponse> {
+async fn load_current(pool: &MySqlPool, school_id: Uuid) -> AppResult<FormatResponse> {
     let row: Option<CurrentRow> = sqlx::query_as(
         "SELECT r.version, r.config, r.updated_at, u.name AS updated_by \
          FROM report_format_settings r \
          LEFT JOIN users u ON u.id = r.updated_by \
-         WHERE r.school_id = $1",
+         WHERE r.school_id = ?",
     )
     .bind(school_id)
     .fetch_optional(pool)
@@ -211,7 +211,7 @@ async fn load_current(pool: &PgPool, school_id: Uuid) -> AppResult<FormatRespons
 /// Menulis versi baru secara atomik. Baris sekolah dikunci dulu supaya
 /// dua penulisan bersamaan untuk sekolah yang sama berjalan berurutan.
 async fn write_version(
-    pool: &PgPool,
+    pool: &MySqlPool,
     school_id: Uuid,
     user_id: Uuid,
     expected: i32,
@@ -220,13 +220,13 @@ async fn write_version(
 ) -> AppResult<i32> {
     let mut tx = pool.begin().await?;
 
-    sqlx::query("SELECT id FROM schools WHERE id = $1 FOR UPDATE")
+    sqlx::query("SELECT id FROM schools WHERE id = ? FOR UPDATE")
         .bind(school_id)
         .fetch_one(&mut *tx)
         .await?;
 
     let current: Option<i32> =
-        sqlx::query_scalar("SELECT version FROM report_format_settings WHERE school_id = $1")
+        sqlx::query_scalar("SELECT version FROM report_format_settings WHERE school_id = ?")
             .bind(school_id)
             .fetch_optional(&mut *tx)
             .await?;
@@ -241,12 +241,13 @@ async fn write_version(
     let next = current + 1;
     let json = serde_json::to_value(config).map_err(|e| AppError::Internal(e.into()))?;
 
+    // Alias baris (AS new) tersedia sejak MySQL 8.0.19 dan menggantikan VALUES() yang deprecated.
     sqlx::query(
         "INSERT INTO report_format_settings (school_id, version, config, updated_by, updated_at) \
-         VALUES ($1, $2, $3, $4, now()) \
-         ON CONFLICT (school_id) DO UPDATE SET \
-             version = EXCLUDED.version, config = EXCLUDED.config, \
-             updated_by = EXCLUDED.updated_by, updated_at = now()",
+         VALUES (?, ?, ?, ?, UTC_TIMESTAMP(6)) AS new \
+         ON DUPLICATE KEY UPDATE \
+             version = new.version, config = new.config, \
+             updated_by = new.updated_by, updated_at = UTC_TIMESTAMP(6)",
     )
     .bind(school_id)
     .bind(next)
@@ -257,7 +258,7 @@ async fn write_version(
 
     sqlx::query(
         "INSERT INTO report_format_history (school_id, version, config, action, changed_by) \
-         VALUES ($1, $2, $3, $4, $5)",
+         VALUES (?, ?, ?, ?, ?)",
     )
     .bind(school_id)
     .bind(next)

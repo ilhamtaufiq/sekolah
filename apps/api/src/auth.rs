@@ -204,7 +204,7 @@ pub async fn login(
         "SELECT u.id, u.school_id, u.name, u.email, u.password_hash, u.role, u.is_active, \
                 s.name AS school_name \
          FROM users u JOIN schools s ON s.id = u.school_id \
-         WHERE s.slug = $1 AND lower(u.email) = lower($2)",
+         WHERE s.slug = ? AND lower(u.email) = lower(?)",
     )
     .bind(req.school_slug.trim().to_lowercase())
     .bind(req.email.trim())
@@ -250,7 +250,7 @@ pub async fn me(State(st): State<AppState>, user: AuthUser) -> AppResult<Json<Me
     let row: MeRow = sqlx::query_as(
         "SELECT u.id, u.name, u.email, u.role, u.school_id, s.name AS school_name \
          FROM users u JOIN schools s ON s.id = u.school_id \
-         WHERE u.id = $1 AND u.school_id = $2 AND u.is_active",
+         WHERE u.id = ? AND u.school_id = ? AND u.is_active",
     )
     .bind(user.user_id)
     .bind(user.school_id)

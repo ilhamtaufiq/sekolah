@@ -1,11 +1,11 @@
 # SIMAS — Sistem Informasi Manajemen Sekolah
 
-Multi-tenant: satu deployment melayani banyak sekolah. Setiap sekolah diidentifikasi dengan `slug` dan semua datanya terpisah lewat `school_id` yang diambil dari token, bukan dari input klien.
+Multi-tenant (database: MySQL 8.4): satu deployment melayani banyak sekolah. Setiap sekolah diidentifikasi dengan `slug` dan semua datanya terpisah lewat `school_id` yang diambil dari token, bukan dari input klien.
 
 ## Struktur
 
 ```
-apps/api/       Backend Rust (Axum, SQLx, PostgreSQL)
+apps/api/       Backend Rust (Axum, SQLx, MySQL 8.4)
 apps/web/       Frontend React + Vite + Tailwind
 Dockerfile.api  Image API (multi-stage, cargo-chef)
 Dockerfile.web  Image web (build Vite, disajikan nginx, meneruskan /api)
@@ -31,7 +31,7 @@ docker compose -f deploy/docker-compose.yml up --build
 Pengembangan terpisah:
 
 ```bash
-# Backend (perlu PostgreSQL di localhost:5432, lihat .env.example)
+# Backend (perlu MySQL di localhost:3306, lihat .env.example)
 cd apps/api && cargo run -- serve
 
 # Frontend (dev server meneruskan /api ke localhost:8080)
