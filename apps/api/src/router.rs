@@ -113,6 +113,10 @@ pub fn build(state: AppState) -> Router {
         .route("/api/exams/{id}/attempts", get(exams::manage::attempts))
         .route("/api/exams/{id}/analysis", get(exams::manage::analysis))
         .route(
+            "/api/exams/{id}/attempts/{attempt_id}",
+            get(exams::manage::attempt_answers),
+        )
+        .route(
             "/api/attempts/{id}/answers/{question_id}/score",
             put(exams::manage::grade_essay),
         )

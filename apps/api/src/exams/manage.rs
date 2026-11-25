@@ -27,6 +27,7 @@ pub struct ExamRow {
     pub assignment_id: Uuid,
     pub class_id: Uuid,
     pub class_name: String,
+    pub subject_id: Uuid,
     pub subject_name: String,
     pub title: String,
     pub duration_minutes: u32,
@@ -133,7 +134,7 @@ pub struct EssayScoreInput {
 /// Admin, atau guru pengampu penugasan paket ini.
 async fn load_for_teacher(pool: &MySqlPool, user: &AuthUser, exam_id: Uuid) -> AppResult<ExamRow> {
     let sql_row: ExamRow = sqlx::query_as(
-        "SELECT e.id, e.assignment_id, ta.class_id, c.name AS class_name, s.name AS subject_name, \
+        "SELECT e.id, e.assignment_id, ta.class_id, c.name AS class_name, s.id AS subject_id, s.name AS subject_name, \
          e.title, e.duration_minutes, e.window_start, e.window_end, e.shuffle_questions, e.shuffle_options, e.token, e.status, \
          CAST((SELECT COUNT(*) FROM exam_questions eq WHERE eq.exam_id = e.id) AS SIGNED) AS question_count, \
          CAST(COALESCE((SELECT SUM(eq.points) FROM exam_questions eq WHERE eq.exam_id = e.id), 0) AS SIGNED) AS total_points \
@@ -217,7 +218,7 @@ pub async fn list(
 ) -> AppResult<Json<Vec<ExamRow>>> {
     require_role(&user, TEACH_ROLES)?;
     let rows: Vec<ExamRow> = sqlx::query_as(
-        "SELECT e.id, e.assignment_id, ta.class_id, c.name AS class_name, s.name AS subject_name, \
+        "SELECT e.id, e.assignment_id, ta.class_id, c.name AS class_name, s.id AS subject_id, s.name AS subject_name, \
          e.title, e.duration_minutes, e.window_start, e.window_end, e.shuffle_questions, e.shuffle_options, e.token, e.status, \
          CAST((SELECT COUNT(*) FROM exam_questions eq WHERE eq.exam_id = e.id) AS SIGNED) AS question_count, \
          CAST(COALESCE((SELECT SUM(eq.points) FROM exam_questions eq WHERE eq.exam_id = e.id), 0) AS SIGNED) AS total_points \
@@ -627,4 +628,39 @@ pub async fn analysis(
         provisional: exam.window_end > Utc::now(),
         items,
     }))
+}
+
+#[derive(Serialize, FromRow)]
+pub struct AttemptAnswerRow {
+    pub question_id: Uuid,
+    pub position: u32,
+    pub kind: String,
+    pub body: String,
+    pub points: u32,
+    pub answer: Option<String>,
+    pub score: Option<u32>,
+}
+
+/// Jawaban satu percobaan untuk guru: dipakai untuk menilai esai.
+pub async fn attempt_answers(
+    State(st): State<AppState>,
+    user: AuthUser,
+    Path((exam_id, attempt_id)): Path<(Uuid, Uuid)>,
+) -> AppResult<Json<Vec<AttemptAnswerRow>>> {
+    require_role(&user, TEACH_ROLES)?;
+    load_for_teacher(&st.pool, &user, exam_id).await?;
+    let rows: Vec<AttemptAnswerRow> = sqlx::query_as(
+        "SELECT eq.question_id, eq.position, q.kind, q.body, eq.points, aa.answer, aa.score \
+         FROM exam_attempts a \
+         JOIN exam_questions eq ON eq.exam_id = a.exam_id \
+         JOIN questions q ON q.id = eq.question_id \
+         LEFT JOIN attempt_answers aa ON aa.attempt_id = a.id AND aa.question_id = eq.question_id \
+         WHERE a.id = ? AND a.exam_id = ? \
+         ORDER BY eq.position",
+    )
+    .bind(attempt_id)
+    .bind(exam_id)
+    .fetch_all(&st.pool)
+    .await?;
+    Ok(Json(rows))
 }
