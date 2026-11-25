@@ -1,0 +1,53 @@
+# Stack produksi untuk Coolify (Docker Compose resource).
+# MySQL, API, dan web berjalan dalam satu stack; hanya web yang diekspos ke luar.
+# Variabel rahasia diisi di tab Environment Variables Coolify:
+#   MYSQL_ROOT_PASSWORD, MYSQL_PASSWORD, JWT_SECRET
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?isi MYSQL_ROOT_PASSWORD di Coolify}
+      MYSQL_DATABASE: simas
+      MYSQL_USER: simas
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?isi MYSQL_PASSWORD di Coolify}
+    volumes:
+      - dbdata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-usimas", "-p$${MYSQL_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: mysql://simas:${MYSQL_PASSWORD:?isi MYSQL_PASSWORD di Coolify}@db:3306/simas
+      JWT_SECRET: ${JWT_SECRET:?isi JWT_SECRET di Coolify}
+      JWT_TTL_HOURS: "8"
+      RUN_MIGRATIONS: "true"
+      RUST_LOG: simas_api=info,tower_http=info
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    restart: unless-stopped
+    environment:
+      API_UPSTREAM: api:8080
+    # Tanpa "ports": Coolify menghubungkan domain publik ke port 80 container ini.
+    expose:
+      - "80"
+    depends_on:
+      - api
+
+volumes:
+  dbdata:
