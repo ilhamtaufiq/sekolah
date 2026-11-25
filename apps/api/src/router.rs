@@ -130,6 +130,14 @@ pub fn build(state: AppState) -> Router {
         )
         .route("/api/lms/materials/{id}", delete(lms::materials::delete))
         .route(
+            "/api/lms/materials/{id}/progress",
+            get(lms::video::mine).post(lms::video::beat),
+        )
+        .route(
+            "/api/lms/rooms/{id}/progress",
+            get(lms::video::room_summary),
+        )
+        .route(
             "/api/lms/materials/{id}/files",
             post(lms::materials::upload)
                 .layer(DefaultBodyLimit::max(lms::storage::MAX_REQUEST_BYTES)),

@@ -9,6 +9,7 @@ pub mod announcements;
 pub mod materials;
 pub mod storage;
 pub mod tasks;
+pub mod video;
 
 use axum::{
     Json,

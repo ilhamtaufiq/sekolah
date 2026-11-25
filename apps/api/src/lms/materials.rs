@@ -20,6 +20,7 @@ pub struct Material {
     pub id: Uuid,
     pub title: String,
     pub body: Option<String>,
+    pub youtube_id: Option<String>,
     pub created_by_name: String,
     pub created_at: DateTime<Utc>,
     pub files: Vec<FileView>,
@@ -30,6 +31,7 @@ struct MaterialRow {
     id: Uuid,
     title: String,
     body: Option<String>,
+    youtube_id: Option<String>,
     created_by_name: String,
     created_at: DateTime<Utc>,
 }
@@ -38,6 +40,8 @@ struct MaterialRow {
 pub struct MaterialInput {
     pub title: String,
     pub body: Option<String>,
+    /// Tautan YouTube. Jika diisi, materi menjadi video yang progres tontonnya dilacak.
+    pub youtube_url: Option<String>,
 }
 
 pub async fn list(
@@ -47,7 +51,7 @@ pub async fn list(
 ) -> AppResult<Json<Vec<Material>>> {
     room_scope(&st.pool, &user, room_id).await?;
     let rows: Vec<MaterialRow> = sqlx::query_as(
-        "SELECT m.id, m.title, m.body, u.name AS created_by_name, m.created_at \
+        "SELECT m.id, m.title, m.body, m.youtube_id, u.name AS created_by_name, m.created_at \
          FROM lms_materials m JOIN users u ON u.id = m.created_by \
          WHERE m.assignment_id = ? AND m.school_id = ? ORDER BY m.created_at DESC",
     )
@@ -63,6 +67,7 @@ pub async fn list(
             id: r.id,
             title: r.title,
             body: r.body,
+            youtube_id: r.youtube_id,
             created_by_name: r.created_by_name,
             created_at: r.created_at,
             files,
@@ -85,11 +90,26 @@ pub async fn create(
     let mut v = Validator::new();
     let title = v.text("title", &input.title, 1, 200);
     let body = v.opt_text("body", input.body.as_deref(), 20_000);
+    let youtube_id = match input
+        .youtube_url
+        .as_deref()
+        .map(str::trim)
+        .filter(|u| !u.is_empty())
+    {
+        Some(url) => match super::video::parse_youtube_id(url) {
+            Some(id) => Some(id),
+            None => {
+                v.require(false, "youtube_url", "tautan YouTube tidak valid");
+                None
+            }
+        },
+        None => None,
+    };
     v.finish()?;
 
     let id = Uuid::new_v4();
     sqlx::query(
-        "INSERT INTO lms_materials (id, school_id, assignment_id, title, body, created_by) VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT INTO lms_materials (id, school_id, assignment_id, title, body, created_by, youtube_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(id)
     .bind(user.school_id)
@@ -97,6 +117,7 @@ pub async fn create(
     .bind(&title)
     .bind(&body)
     .bind(user.user_id)
+    .bind(&youtube_id)
     .execute(&st.pool)
     .await?;
 
@@ -113,6 +134,7 @@ pub async fn create(
         id,
         title,
         body,
+        youtube_id,
         created_by_name: creator,
         created_at,
         files: vec![],

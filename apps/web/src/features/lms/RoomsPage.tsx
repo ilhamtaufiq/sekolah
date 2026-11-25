@@ -3,11 +3,13 @@ import { Link, useParams } from "react-router";
 import { Alert, Button, Card, ErrorAlert, Field, Input, Table, cn } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
+import { VideoPlayer } from "./VideoPlayer";
 import { downloadFile, formatBytes, formatDateTime, type FileItem } from "./files";
 import { useToken } from "./useToken";
 
 export type Room = { id: string; class_name: string; subject_name: string; teacher_name: string };
-export type Material = { id: string; title: string; body: string | null; created_by_name: string; created_at: string; files: FileItem[] };
+export type Material = { id: string; title: string; body: string | null; youtube_id: string | null; created_by_name: string; created_at: string; files: FileItem[] };
+type MaterialProgress = { material_id: string; title: string; enrolled: number; completed: number; students: { student_id: string; student_name: string; percent: number; completed: boolean }[] };
 export type Task = { id: string; title: string; instructions: string | null; due_at: string; max_score: number; allow_late: boolean; created_at: string; grade_component_id: string | null };
 type Semester = { id: string; name: string; starts_on: string; ends_on: string };
 type GradeComponent = { id: string; name: string };
@@ -85,13 +87,14 @@ function MaterialsTab({ roomId, manage, token }: { roomId: string; manage: boole
   const materials = useApiQuery<Material[]>(["lms-materials", roomId], `/lms/rooms/${roomId}/materials`);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [youtubeUrl, setYoutubeUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
-  const inv = [["lms-materials", roomId]];
+  const inv = [["lms-materials", roomId], ["lms-progress", roomId]];
 
   const create = useApiMutation<void, Material>(
-    { method: "POST", path: () => `/lms/rooms/${roomId}/materials`, body: () => ({ title, body: body || null }) },
+    { method: "POST", path: () => `/lms/rooms/${roomId}/materials`, body: () => ({ title, body: body || null, youtube_url: youtubeUrl.trim() || null }) },
     inv,
   );
   const upload = useApiMutation<string, FileItem>({ method: "POST", path: (id) => `/lms/materials/${id}/files` }, inv);
@@ -116,6 +119,7 @@ function MaterialsTab({ roomId, manage, token }: { roomId: string; manage: boole
     }
     setTitle("");
     setBody("");
+    setYoutubeUrl("");
     setFile(null);
     await materials.refetch();
   };
@@ -127,6 +131,9 @@ function MaterialsTab({ roomId, manage, token }: { roomId: string; manage: boole
           <form onSubmit={onCreate} className="grid gap-4 md:grid-cols-2">
             <Field label="Judul">
               <Input value={title} onChange={(e) => setTitle(e.target.value)} required maxLength={200} />
+            </Field>
+            <Field label="Video YouTube" hint="Opsional. Tempel tautan video. Lampiran dan video bisa dipakai bersamaan.">
+              <Input value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} placeholder="https://youtu.be/..." maxLength={300} />
             </Field>
             <Field label="Lampiran" hint="Opsional">
               <input type="file" accept=".pdf,.docx,.pptx,.xlsx,.png,.jpg,.jpeg,.txt" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="text-sm" />
@@ -144,10 +151,14 @@ function MaterialsTab({ roomId, manage, token }: { roomId: string; manage: boole
       {notice && <Alert tone="warning">{notice}</Alert>}
       {downloadError && <Alert tone="error">{downloadError}</Alert>}
       {materials.data && materials.data.length === 0 && <p className="text-sm text-slate-500">Belum ada materi.</p>}
+      {manage && <VideoProgressSummary roomId={roomId} />}
       {materials.data?.map((m) => (
         <Card key={m.id} title={m.title} description={`${m.created_by_name} · ${formatDateTime(m.created_at)}`}
           actions={manage ? <Button variant="ghost" onClick={() => remove.mutate(m.id)} disabled={remove.isPending}>Hapus</Button> : undefined}>
           {m.body && <p className="whitespace-pre-line text-sm text-slate-700">{m.body}</p>}
+          {m.youtube_id && (
+            <VideoPlayer materialId={m.id} youtubeId={m.youtube_id} token={token} track={!manage} />
+          )}
           {m.files.length > 0 && (
             <ul className="space-y-1">
               {m.files.map((f) => (
@@ -310,5 +321,40 @@ function AnnouncementsTab({ roomId, manage }: { roomId: string; manage: boolean 
         </Card>
       ))}
     </div>
+  );
+}
+
+/** Rekap progres tonton semua video di ruang kelas, untuk guru. */
+function VideoProgressSummary({ roomId }: { roomId: string }) {
+  const progress = useApiQuery<MaterialProgress[]>(["lms-progress", roomId], `/lms/rooms/${roomId}/progress`);
+  if (!progress.data || progress.data.length === 0) return null;
+  return (
+    <Card title="Progres tonton video" description="Siswa dianggap selesai setelah menonton 100% video.">
+      <div className="space-y-5">
+        {progress.data.map((m) => (
+          <div key={m.material_id} className="space-y-2">
+            <p className="text-sm font-medium">
+              {m.title} <span className="font-normal text-slate-500">· {m.completed} dari {m.enrolled} siswa selesai</span>
+            </p>
+            <Table head={["Siswa", "Progres", "Status"]}>
+              {m.students.map((st) => (
+                <tr key={st.student_id}>
+                  <td className="px-4 py-2">{st.student_name}</td>
+                  <td className="px-4 py-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-32 overflow-hidden rounded-full bg-slate-200">
+                        <div className="h-full rounded-full bg-brand-600" style={{ width: `${st.percent}%` }} />
+                      </div>
+                      <span className="text-xs text-slate-600">{st.percent}%</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-2">{st.completed ? "Selesai" : "Belum"}</td>
+                </tr>
+              ))}
+            </Table>
+          </div>
+        ))}
+      </div>
+    </Card>
   );
 }
