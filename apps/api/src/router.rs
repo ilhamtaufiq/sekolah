@@ -4,7 +4,7 @@ use axum::{
 };
 use tower_http::trace::TraceLayer;
 
-use crate::{academic, auth, health, report_format, state::AppState};
+use crate::{academic, auth, grades, health, report_format, state::AppState};
 
 pub fn build(state: AppState) -> Router {
     Router::new()
@@ -88,6 +88,38 @@ pub fn build(state: AppState) -> Router {
             get(academic::attendance::get_session),
         )
         .route("/api/dashboard/summary", get(academic::dashboard::summary))
+        // Nilai dan raport (F3)
+        .route(
+            "/api/semesters",
+            get(grades::semesters::list).post(grades::semesters::create),
+        )
+        .route(
+            "/api/grade-components",
+            get(grades::components::list).post(grades::components::create),
+        )
+        .route(
+            "/api/grade-components/{id}",
+            delete(grades::components::delete),
+        )
+        .route(
+            "/api/grade-entries",
+            get(grades::entries::list).put(grades::entries::save),
+        )
+        .route("/api/final-grades", get(grades::finals::list))
+        .route(
+            "/api/final-grades/compute",
+            post(grades::finals::compute_handler),
+        )
+        .route(
+            "/api/term-notes",
+            get(grades::notes::list).put(grades::notes::save),
+        )
+        .route("/api/report-cards", get(grades::reports::list))
+        .route(
+            "/api/report-cards/generate",
+            post(grades::reports::generate),
+        )
+        .route("/api/report-cards/{id}/pdf", get(grades::reports::download))
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }

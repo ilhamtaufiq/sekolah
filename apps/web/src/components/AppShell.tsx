@@ -4,6 +4,7 @@ import { cn } from "./ui";
 
 const STAFF = ["admin", "kepala_sekolah", "guru", "wali_kelas"];
 const LEADERSHIP = ["admin", "kepala_sekolah"];
+const TEACHING = ["admin", "guru", "wali_kelas"];
 
 const nav = [
   { to: "/", label: "Beranda", roles: STAFF, end: true },
@@ -14,6 +15,8 @@ const nav = [
   { to: "/staf", label: "Guru & staf", roles: LEADERSHIP },
   { to: "/jadwal", label: "Jadwal", roles: STAFF },
   { to: "/absensi", label: "Absensi", roles: STAFF },
+  { to: "/nilai", label: "Input nilai", roles: TEACHING },
+  { to: "/raport", label: "Raport", roles: STAFF },
   { to: "/pengaturan/format-raport", label: "Format raport", roles: STAFF },
 ];
 

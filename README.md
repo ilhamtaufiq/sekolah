@@ -30,6 +30,19 @@ Smoke test F2 (butuh API berjalan dan sekolah `sdn-1` dengan admin dari langkah 
 python3 apps/api/scripts/smoke_f2.py http://localhost:8080
 ```
 
+- Nilai dan raport (F3)
+  - Komponen nilai per mapel dan semester dengan bobot, input nilai massal (tempel dari Excel)
+  - Nilai akhir berbobot dengan predikat dan KKM dari format raport aktif; snapshot per versi format
+  - Catatan sikap, ekstrakurikuler, dan wali kelas; rekap ketidakhadiran dari absensi
+  - Raport PDF dirender dengan Typst. Variabel lingkungan: `REPORTS_DIR` (tempat PDF disimpan, wajib volume persisten di produksi) dan `FONTS_DIR` (opsional, folder font tambahan)
+
+Smoke test F3:
+
+```bash
+python3 apps/api/scripts/smoke_f3.py http://localhost:8080
+```
+
+
 ## Menjalankan lokal
 
 Stack lengkap dengan Docker:

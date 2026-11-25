@@ -180,7 +180,7 @@ pub async fn restore_version(
 
 // ---------- Repository ----------
 
-async fn load_current(pool: &MySqlPool, school_id: Uuid) -> AppResult<FormatResponse> {
+pub(crate) async fn load_current(pool: &MySqlPool, school_id: Uuid) -> AppResult<FormatResponse> {
     let row: Option<CurrentRow> = sqlx::query_as(
         "SELECT r.version, r.config, r.updated_at, u.name AS updated_by \
          FROM report_format_settings r \

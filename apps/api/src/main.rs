@@ -4,6 +4,7 @@ mod cli;
 mod config;
 mod db;
 mod error;
+mod grades;
 mod health;
 mod report_format;
 mod router;

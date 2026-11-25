@@ -12,6 +12,8 @@ import { StudentsPage } from "./features/academic/StudentsPage";
 import { StaffPage } from "./features/academic/StaffPage";
 import { SchedulePage } from "./features/academic/SchedulePage";
 import { AttendancePage } from "./features/academic/AttendancePage";
+import { GradesPage } from "./features/grades/GradesPage";
+import { ReportsPage } from "./features/grades/ReportsPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -41,6 +43,8 @@ export function App() {
           <Route path="staf" element={<StaffPage />} />
           <Route path="jadwal" element={<SchedulePage />} />
           <Route path="absensi" element={<AttendancePage />} />
+          <Route path="nilai" element={<GradesPage />} />
+          <Route path="raport" element={<ReportsPage />} />
           <Route path="pengaturan/format-raport" element={<FormatSettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
