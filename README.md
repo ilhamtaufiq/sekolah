@@ -18,6 +18,17 @@ deploy/         Compose lokal, konfigurasi nginx, panduan Coolify
 - Pengaturan format raport: kop, halaman, penilaian, predikat, urutan bagian, tanda tangan
   - Versi terus bertambah, dengan deteksi konflik (409) saat dua admin mengedit bersamaan
   - Riwayat perubahan dan pemulihan (restore) yang membuat versi baru
+- Akademik inti (F2)
+  - Tahun ajaran (satu aktif per sekolah), mata pelajaran, kelas dengan wali kelas
+  - Siswa dan rombel (satu siswa satu kelas per tahun ajaran)
+  - Akun guru dan staf, penugasan guru per mapel, jadwal dengan cek bentrok
+  - Absensi harian (wali kelas) dan per mapel (guru pengampu), dashboard ringkasan
+
+Smoke test F2 (butuh API berjalan dan sekolah `sdn-1` dengan admin dari langkah di atas):
+
+```bash
+python3 apps/api/scripts/smoke_f2.py http://localhost:8080
+```
 
 ## Menjalankan lokal
 

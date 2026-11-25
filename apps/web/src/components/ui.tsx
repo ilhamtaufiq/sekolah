@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
 
 export function cn(...parts: (string | false | null | undefined)[]) {
   return parts.filter(Boolean).join(" ");
@@ -90,4 +90,55 @@ export function Alert({ tone, children }: { tone: "error" | "info" | "success" |
     warning: "bg-amber-50 text-amber-800 ring-amber-200",
   }[tone];
   return <div className={cn("rounded-lg px-4 py-3 text-sm ring-1", styles)}>{children}</div>;
+}
+
+export function ErrorAlert({ error }: { error: unknown }) {
+  if (!error) return null;
+  const apiError = error as { message?: string; details?: { field: string; message: string }[] };
+  const details = apiError.details ?? [];
+  return (
+    <Alert tone="error">
+      <p>{apiError.message ?? "Terjadi kesalahan."}</p>
+      {details.length > 0 && (
+        <ul className="mt-1 list-disc space-y-0.5 pl-5">
+          {details.map((d, i) => (
+            <li key={i}>
+              <code className="text-xs">{d.field}</code>: {d.message}
+            </li>
+          ))}
+        </ul>
+      )}
+    </Alert>
+  );
+}
+
+export function Select({ className, children, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <select
+      {...props}
+      className={cn(
+        "block w-full rounded-lg border-0 bg-white px-3 py-2 text-sm text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-brand-500 disabled:bg-slate-100",
+        className,
+      )}
+    >
+      {children}
+    </select>
+  );
+}
+
+export function Table({ head, children }: { head: ReactNode[]; children: ReactNode }) {
+  return (
+    <div className="overflow-x-auto rounded-xl ring-1 ring-slate-200">
+      <table className="min-w-full divide-y divide-slate-200 bg-white text-sm">
+        <thead className="bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+          <tr>
+            {head.map((h, i) => (
+              <th key={i} className="px-4 py-2.5">{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">{children}</tbody>
+      </table>
+    </div>
+  );
 }

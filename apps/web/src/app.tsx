@@ -4,21 +4,20 @@ import { useAuth } from "./lib/auth";
 import { AppShell } from "./components/AppShell";
 import { LoginPage } from "./features/auth/LoginPage";
 import { FormatSettingsPage } from "./features/report-format/FormatSettingsPage";
+import { DashboardPage } from "./features/dashboard/DashboardPage";
+import { YearsPage } from "./features/academic/YearsPage";
+import { SubjectsPage } from "./features/academic/SubjectsPage";
+import { ClassesPage, ClassDetailPage } from "./features/academic/ClassesPage";
+import { StudentsPage } from "./features/academic/StudentsPage";
+import { StaffPage } from "./features/academic/StaffPage";
+import { SchedulePage } from "./features/academic/SchedulePage";
+import { AttendancePage } from "./features/academic/AttendancePage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const location = useLocation();
   if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   return <>{children}</>;
-}
-
-function Home() {
-  return (
-    <div className="space-y-2">
-      <h1 className="text-2xl font-semibold tracking-tight">Selamat datang</h1>
-      <p className="text-sm text-slate-600">Modul lain menyusul di fase berikutnya. Mulai dari pengaturan format raport.</p>
-    </div>
-  );
 }
 
 export function App() {
@@ -33,7 +32,15 @@ export function App() {
             </RequireAuth>
           }
         >
-          <Route index element={<Home />} />
+          <Route index element={<DashboardPage />} />
+          <Route path="tahun-ajaran" element={<YearsPage />} />
+          <Route path="mapel" element={<SubjectsPage />} />
+          <Route path="kelas" element={<ClassesPage />} />
+          <Route path="kelas/:id" element={<ClassDetailPage />} />
+          <Route path="siswa" element={<StudentsPage />} />
+          <Route path="staf" element={<StaffPage />} />
+          <Route path="jadwal" element={<SchedulePage />} />
+          <Route path="absensi" element={<AttendancePage />} />
           <Route path="pengaturan/format-raport" element={<FormatSettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

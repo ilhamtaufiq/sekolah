@@ -2,8 +2,19 @@ import { NavLink, Outlet, useNavigate } from "react-router";
 import { useAuth } from "../lib/auth";
 import { cn } from "./ui";
 
+const STAFF = ["admin", "kepala_sekolah", "guru", "wali_kelas"];
+const LEADERSHIP = ["admin", "kepala_sekolah"];
+
 const nav = [
-  { to: "/pengaturan/format-raport", label: "Format raport", roles: ["admin", "kepala_sekolah", "guru", "wali_kelas"] },
+  { to: "/", label: "Beranda", roles: STAFF, end: true },
+  { to: "/tahun-ajaran", label: "Tahun ajaran", roles: LEADERSHIP },
+  { to: "/mapel", label: "Mapel", roles: LEADERSHIP },
+  { to: "/kelas", label: "Kelas", roles: STAFF },
+  { to: "/siswa", label: "Siswa", roles: STAFF },
+  { to: "/staf", label: "Guru & staf", roles: LEADERSHIP },
+  { to: "/jadwal", label: "Jadwal", roles: STAFF },
+  { to: "/absensi", label: "Absensi", roles: STAFF },
+  { to: "/pengaturan/format-raport", label: "Format raport", roles: STAFF },
 ];
 
 export function AppShell() {
@@ -26,6 +37,7 @@ export function AppShell() {
                   <NavLink
                     key={item.to}
                     to={item.to}
+                    end={"end" in item && item.end}
                     className={({ isActive }) =>
                       cn(
                         "rounded-md px-3 py-1.5 text-sm font-medium",
