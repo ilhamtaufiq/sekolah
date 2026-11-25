@@ -8,7 +8,9 @@ import { useToken } from "./useToken";
 
 export type Room = { id: string; class_name: string; subject_name: string; teacher_name: string };
 export type Material = { id: string; title: string; body: string | null; created_by_name: string; created_at: string; files: FileItem[] };
-export type Task = { id: string; title: string; instructions: string | null; due_at: string; max_score: number; allow_late: boolean; created_at: string };
+export type Task = { id: string; title: string; instructions: string | null; due_at: string; max_score: number; allow_late: boolean; created_at: string; grade_component_id: string | null };
+type Semester = { id: string; name: string; starts_on: string; ends_on: string };
+type GradeComponent = { id: string; name: string };
 export type Announcement = { id: string; title: string; body: string; created_by_name: string; created_at: string };
 
 export function RoomsPage() {
@@ -178,6 +180,18 @@ function TasksTab({ roomId, manage }: { roomId: string; manage: boolean }) {
   const [due, setDue] = useState("");
   const [maxScore, setMaxScore] = useState("100");
   const [allowLate, setAllowLate] = useState(false);
+  // Nilai tugas bisa disalin ke komponen nilai F3 (opsional). Pilih semester dulu.
+  const semesters = useApiQuery<Semester[]>(["semesters"], "/semesters");
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const defaultSemester =
+    semesters.data?.find((x) => x.starts_on <= todayIso && todayIso <= x.ends_on)?.id ?? semesters.data?.[0]?.id ?? "";
+  const [semesterPick, setSemesterPick] = useState("");
+  const semesterId = semesterPick || defaultSemester;
+  const components = useApiQuery<GradeComponent[]>(
+    ["grade-components", roomId, semesterId],
+    semesterId ? `/grade-components?assignment_id=${roomId}&semester_id=${semesterId}` : null,
+  );
+  const [componentId, setComponentId] = useState("");
   const create = useApiMutation<void, Task>(
     {
       method: "POST",
@@ -188,6 +202,7 @@ function TasksTab({ roomId, manage }: { roomId: string; manage: boolean }) {
         due_at: new Date(due).toISOString(),
         max_score: Number(maxScore),
         allow_late: allowLate,
+        grade_component_id: componentId || null,
       }),
     },
     [["lms-tasks", roomId]],
@@ -214,6 +229,17 @@ function TasksTab({ roomId, manage }: { roomId: string; manage: boolean }) {
               <input type="checkbox" checked={allowLate} onChange={(e) => setAllowLate(e.target.checked)} className="size-4 rounded border-slate-300 text-brand-600" />
               Terima terlambat
             </label>
+            <Field label="Semester" hint="Untuk nilai F3">
+              <select value={semesterId} onChange={(e) => { setSemesterPick(e.target.value); setComponentId(""); }} className="block w-full rounded-lg border-0 bg-white px-3 py-2 text-sm ring-1 ring-inset ring-slate-300">
+                {semesters.data?.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+              </select>
+            </Field>
+            <Field label="Salin nilai ke komponen" hint="Opsional, nilai F3">
+              <select value={componentId} onChange={(e) => setComponentId(e.target.value)} className="block w-full rounded-lg border-0 bg-white px-3 py-2 text-sm ring-1 ring-inset ring-slate-300">
+                <option value="">— tidak terhubung —</option>
+                {components.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </Field>
             <div className="flex items-end"><Button type="submit" disabled={create.isPending || !due}>Simpan tugas</Button></div>
             <div className="md:col-span-2 xl:col-span-5">
               <Field label="Instruksi" hint="Opsional">

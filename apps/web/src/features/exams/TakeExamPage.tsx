@@ -30,6 +30,8 @@ export function TakeExamPage() {
   const [now, setNow] = useState(() => Date.now());
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [locked, setLocked] = useState(false);
+  const [unlockError, setUnlockError] = useState<string | null>(null);
   const [result, setResult] = useState<{ score: number | null; graded: boolean } | null>(null);
   const timers = useRef<Record<string, number>>({});
   const refetchedAtZero = useRef(false);
@@ -60,6 +62,10 @@ export function TakeExamPage() {
   }, []);
 
   const data = attempt.data;
+  // Percobaan yang sudah terkunci di server tetap terkunci setelah halaman dimuat ulang.
+  useEffect(() => {
+    if (data?.locked) setLocked(true);
+  }, [data?.locked]);
   const serverNow = now + offset;
   const deadlineMs = data ? new Date(data.deadline).getTime() : 0;
   const remaining = deadlineMs - serverNow;
@@ -107,6 +113,8 @@ export function TakeExamPage() {
   useEffect(() => {
     if (!inProgress) return;
     const log = (kind: string) => {
+      // Keluar dari halaman mengunci ujian sampai siswa membukanya kembali.
+      if (kind === "blur" || kind === "hidden") setLocked(true);
       void api(`/student/attempts/${attemptId}/events`, { method: "POST", token, body: { kind } }).catch(() => undefined);
     };
     const onBlur = () => log("blur");
@@ -121,6 +129,16 @@ export function TakeExamPage() {
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [inProgress, attemptId, token]);
+
+  const unlock = async () => {
+    setUnlockError(null);
+    try {
+      await api(`/student/attempts/${attemptId}/unlock`, { method: "POST", token });
+      setLocked(false);
+    } catch (err) {
+      setUnlockError(err instanceof Error ? err.message : "Gagal membuka kembali halaman ujian.");
+    }
+  };
 
   const questions: TakeQuestion[] = useMemo(() => data?.questions ?? [], [data]);
   const current = questions[index];
@@ -188,6 +206,21 @@ export function TakeExamPage() {
 
   return (
     <div className="space-y-6">
+      {locked && (
+        <div role="alertdialog" aria-modal="true" aria-labelledby="lock-title" className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-4">
+          <div className="w-full max-w-md space-y-4 rounded-xl bg-white p-6 shadow-xl">
+            <h2 id="lock-title" className="text-lg font-semibold">Ujian terkunci</h2>
+            <p className="text-sm text-slate-600">
+              Anda keluar dari halaman ujian. Kejadian ini tercatat untuk guru. Jawaban belum bisa diubah sampai Anda membuka kembali halaman ini.
+            </p>
+            <p className="text-xs text-slate-500">
+              Batasan: browser tidak bisa mengunci aplikasi lain di komputer ini. Yang dikunci dan dicatat adalah keluar dari halaman ujian.
+            </p>
+            {unlockError && <Alert tone="error">{unlockError}</Alert>}
+            <Button className="w-full" onClick={() => void unlock()}>Buka kembali halaman ujian</Button>
+          </div>
+        </div>
+      )}
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-sm text-slate-500">Ujian berlangsung</p>

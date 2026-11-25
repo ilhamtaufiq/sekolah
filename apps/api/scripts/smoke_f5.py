@@ -167,6 +167,10 @@ expect("pilihan di luar opsi ditolak", call("PUT", f"/api/student/attempts/{atte
 expect("autosave esai", call("PUT", f"/api/student/attempts/{attempt_id}/answers/{q_essay['id']}", dina["token"], {"answer": "Air menguap lalu mengembun."}), 200)
 expect("catat kejadian pindah tab", call("POST", f"/api/student/attempts/{attempt_id}/events", dina["token"], {"kind": "blur"}), 200)
 expect("kejadian tidak dikenal ditolak", call("POST", f"/api/student/attempts/{attempt_id}/events", dina["token"], {"kind": "lain"}), 422)
+# Setelah keluar dari halaman, percobaan terkunci di server: jawaban dan submit ditolak sampai dibuka.
+expect("jawaban ditolak saat terkunci", call("PUT", f"/api/student/attempts/{attempt_id}/answers/{q_essay['id']}", dina["token"], {"answer": "dicoba"}), 409)
+expect("submit ditolak saat terkunci", call("POST", f"/api/student/attempts/{attempt_id}/submit", dina["token"], {}), 409)
+expect("buka kunci", call("POST", f"/api/student/attempts/{attempt_id}/unlock", dina["token"], {}), 200)
 expect("siswa lain tidak bisa membaca percobaan Dina", call("GET", f"/api/student/attempts/{attempt_id}", eko["token"]), 404)
 expect("siswa tidak bisa membuka monitoring guru", call("GET", f"/api/exams/{exam['id']}/attempts", dina["token"]), 403)
 
@@ -192,7 +196,7 @@ monitor = expect("monitoring percobaan", call("GET", f"/api/exams/{exam['id']}/a
 eko_row = next(r for r in monitor if r["attempt_id"] == eko_attempt)
 check("nilai PG benar dihitung (2 dari 2 poin PG)", eko_row["score"] == 2, str(eko_row))
 dina_row = next(r for r in monitor if r["attempt_id"] == attempt_id)
-check("log kejadian Dina tercatat (1)", dina_row["events"] == 1, str(dina_row))
+check("log kejadian Dina tercatat (blur + visible)", dina_row["events"] == 2, str(dina_row))
 check("esai Dina menunggu penilaian", dina_row["pending_essays"] == 1 and dina_row["graded"] is False, str(dina_row))
 
 # ---------- Penilaian esai ----------
@@ -212,9 +216,27 @@ expect("susun soal paket token", call("PUT", f"/api/exams/{tok_exam['id']}/quest
 expect("terbitkan paket token", call("POST", f"/api/exams/{tok_exam['id']}/publish", guru_token), 200)
 listed = expect("daftar siswa untuk paket token", call("GET", "/api/student/exams", eko["token"]), 200)
 check("token tidak dikirim ke siswa, hanya tandanya", next(e for e in listed if e["exam_id"] == tok_exam["id"])["token_required"] is True)
-expect("mulai tanpa token ditolak", call("POST", f"/api/student/exams/{tok_exam['id']}/start", eko["token"], {}), 403)
-expect("token salah ditolak", call("POST", f"/api/student/exams/{tok_exam['id']}/start", eko["token"], {"token": "SALAH"}), 403)
+expect("mulai tanpa token ditolak", call("POST", f"/api/student/exams/{tok_exam['id']}/start", eko["token"], {}), 422)
+expect("token salah ditolak", call("POST", f"/api/student/exams/{tok_exam['id']}/start", eko["token"], {"token": "SALAH"}), 422)
 expect("token benar diterima", call("POST", f"/api/student/exams/{tok_exam['id']}/start", eko["token"], {"token": "RAHASIA1"}), 200)
+
+# Token tersimpan sebagai hash argon2, tidak pernah dikirim ulang ke klien.
+detail = expect("detail paket token untuk guru", call("GET", f"/api/exams/{tok_exam['id']}", guru_token), 200)
+check("token tidak tampil di respons guru", "RAHASIA1" not in json.dumps(detail), str(detail)[:200])
+check("status token terpasang", detail["token_state"] == "set", str(detail)[:200])
+stored = subprocess.run(["mysql", "-uroot", DB, "-N", "-e",
+    f"SELECT token_hash FROM exams WHERE id = UNHEX('{uuid_hex(tok_exam['id'])}')"],
+    capture_output=True, text=True, check=True).stdout.strip()
+check("token tersimpan sebagai hash argon2", stored.startswith("$argon2"), stored[:20])
+
+# Batas percobaan: 5 token salah dalam 10 menit lalu siswa dikunci sementara.
+lim_exam = expect("paket batas percobaan", call("POST", "/api/exams", guru_token, exam_body(
+    f"Batas {tag}", now - timedelta(minutes=5), now + timedelta(hours=2), token="BATAS123")), 200)
+expect("susun soal paket batas", call("PUT", f"/api/exams/{lim_exam['id']}/questions", guru_token, {"question_ids": [q_pg2["id"]]}), 200)
+expect("terbitkan paket batas", call("POST", f"/api/exams/{lim_exam['id']}/publish", guru_token), 200)
+for i in range(5):
+    expect(f"token salah ke-{i + 1} ditolak", call("POST", f"/api/student/exams/{lim_exam['id']}/start", eko["token"], {"token": "SALAH"}), 422)
+expect("percobaan ke-6 dikunci meski token benar", call("POST", f"/api/student/exams/{lim_exam['id']}/start", eko["token"], {"token": "BATAS123"}), 409)
 
 # ---------- Jendela waktu ----------
 future = expect("paket jendela masa depan", call("POST", "/api/exams", guru_token, exam_body(

@@ -27,6 +27,8 @@ use crate::{
 
 const STUDENT_ROLES: &[Role] = &[Role::Siswa];
 const EVENT_KINDS: &[&str] = &["blur", "focus", "hidden", "visible"];
+/// Kejadian yang mengunci percobaan: siswa meninggalkan halaman ujian.
+const LOCK_KINDS: &[&str] = &["blur", "hidden"];
 
 #[derive(Serialize, FromRow)]
 pub struct StudentExamRow {
@@ -83,6 +85,8 @@ pub struct AttemptView {
     /// Hanya tampil setelah semua jawaban dinilai. Kunci jawaban tidak pernah dikirim ke siswa.
     pub score: Option<u32>,
     pub server_now: DateTime<Utc>,
+    /// True bila percobaan terkunci karena siswa keluar dari halaman ujian.
+    pub locked: bool,
     pub questions: Vec<ViewQuestion>,
 }
 
@@ -98,6 +102,7 @@ struct AttemptState {
     graded: bool,
     question_order: serde_json::Value,
     option_order: serde_json::Value,
+    locked_at: Option<DateTime<Utc>>,
 }
 
 #[derive(FromRow)]
@@ -106,7 +111,7 @@ struct ExamSettings {
     duration_minutes: u32,
     window_start: DateTime<Utc>,
     window_end: DateTime<Utc>,
-    token: Option<String>,
+    token_hash: Option<String>,
     status: String,
     shuffle_questions: bool,
     shuffle_options: bool,
@@ -123,13 +128,67 @@ fn shuffled<T: Clone>(items: &[T], enabled: bool) -> Vec<T> {
 
 async fn exam_settings(pool: &MySqlPool, exam_id: Uuid) -> AppResult<ExamSettings> {
     sqlx::query_as(
-        "SELECT title, duration_minutes, window_start, window_end, token, status, \
+        "SELECT title, duration_minutes, window_start, window_end, token_hash, status, \
          shuffle_questions, shuffle_options, grace_seconds FROM exams WHERE id = ?",
     )
     .bind(exam_id)
     .fetch_optional(pool)
     .await?
     .ok_or(AppError::NotFound)
+}
+
+/// Penanda token lama yang belum diatur ulang (lihat migrasi 0007).
+pub const TOKEN_RESET_MARK: &str = "!reset";
+/// Jumlah token salah yang diizinkan per siswa per paket dalam jendela 10 menit.
+const TOKEN_MAX_FAILURES: i64 = 5;
+
+/// Memeriksa token masuk ujian. Token disimpan sebagai hash argon2.
+/// Percobaan salah dicatat, dan siswa dikunci sementara setelah beberapa kali salah.
+async fn check_exam_token(
+    pool: &MySqlPool,
+    exam_id: Uuid,
+    student: Uuid,
+    hash: &str,
+    given: Option<&str>,
+) -> AppResult<()> {
+    if hash == TOKEN_RESET_MARK {
+        return Err(AppError::Conflict(
+            "token ujian perlu diatur ulang oleh guru".to_string(),
+        ));
+    }
+    let recent: i64 = sqlx::query_scalar(
+        "SELECT CAST(COUNT(*) AS SIGNED) FROM exam_token_failures \
+         WHERE exam_id = ? AND student_id = ? AND failed_at > UTC_TIMESTAMP(6) - INTERVAL 10 MINUTE",
+    )
+    .bind(exam_id)
+    .bind(student)
+    .fetch_one(pool)
+    .await?;
+    if recent >= TOKEN_MAX_FAILURES {
+        return Err(AppError::Conflict(
+            "terlalu banyak token salah; coba lagi beberapa menit lagi".to_string(),
+        ));
+    }
+
+    let given = given
+        .map(str::trim)
+        .filter(|t| !t.is_empty())
+        .ok_or_else(|| {
+            AppError::Validation(vec![FieldIssue::new("token", "token ujian wajib diisi")])
+        })?;
+    if crate::auth::verify_password(given, hash) {
+        return Ok(());
+    }
+
+    sqlx::query("INSERT INTO exam_token_failures (exam_id, student_id) VALUES (?, ?)")
+        .bind(exam_id)
+        .bind(student)
+        .execute(pool)
+        .await?;
+    Err(AppError::Validation(vec![FieldIssue::new(
+        "token",
+        "token ujian salah",
+    )]))
 }
 
 /// Pastikan siswa terdaftar di kelas penugasan paket. Tanpa itu, paket dianggap tidak ada.
@@ -147,13 +206,24 @@ async fn ensure_enrolled(pool: &MySqlPool, student_id: Uuid, exam_id: Uuid) -> A
     found.map(|_| ()).ok_or(AppError::NotFound)
 }
 
+/// Percobaan yang terkunci (siswa keluar dari halaman ujian) tidak menerima jawaban atau submit
+/// sampai siswa membukanya kembali lewat endpoint unlock.
+fn ensure_unlocked(attempt: &AttemptState) -> AppResult<()> {
+    if attempt.locked_at.is_some() {
+        return Err(AppError::Conflict(
+            "ujian terkunci karena keluar dari halaman ujian; buka kembali halaman ujian untuk melanjutkan".to_string(),
+        ));
+    }
+    Ok(())
+}
+
 async fn load_attempt(
     pool: &MySqlPool,
     attempt_id: Uuid,
     student_id: Uuid,
 ) -> AppResult<AttemptState> {
     sqlx::query_as(
-        "SELECT id, exam_id, status, started_at, deadline, submitted_at, score, graded, question_order, option_order \
+        "SELECT id, exam_id, status, started_at, deadline, submitted_at, score, graded, question_order, option_order, locked_at \
          FROM exam_attempts WHERE id = ? AND student_id = ?",
     )
     .bind(attempt_id)
@@ -278,6 +348,7 @@ async fn build_view(
         submitted_at: attempt.submitted_at,
         score: if attempt.graded { attempt.score } else { None },
         server_now: now,
+        locked: attempt.locked_at.is_some(),
         questions: Vec::new(),
     };
     if attempt.status != "in_progress" {
@@ -370,15 +441,17 @@ pub async fn list(
     .fetch_all(&st.pool)
     .await?;
     // Token tidak dikirim ke siswa. Hanya tanda bahwa token diperlukan.
-    let token_flags: Vec<(Uuid, Option<String>)> =
-        sqlx::query_as("SELECT id, token FROM exams WHERE school_id = ? AND status = 'published'")
-            .bind(user.school_id)
-            .fetch_all(&st.pool)
-            .await?;
+    // Paket dengan token lama yang belum diatur ulang ('!reset') juga butuh token, sehingga dihitung wajib.
+    let token_flags: Vec<(Uuid, i64)> = sqlx::query_as(
+        "SELECT id, CAST(token_hash IS NOT NULL AS SIGNED) FROM exams WHERE school_id = ? AND status = 'published'",
+    )
+    .bind(user.school_id)
+    .fetch_all(&st.pool)
+    .await?;
     for row in &mut rows {
         row.token_required = token_flags
             .iter()
-            .any(|(id, token)| *id == row.exam_id && token.is_some());
+            .any(|(id, required)| *id == row.exam_id && *required != 0);
     }
     Ok(Json(rows))
 }
@@ -401,7 +474,7 @@ pub async fn start(
 
     // Percobaan yang sudah ada: lanjutkan bila masih berjalan, tolak bila sudah selesai.
     let existing: Option<AttemptState> = sqlx::query_as(
-        "SELECT id, exam_id, status, started_at, deadline, submitted_at, score, graded, question_order, option_order \
+        "SELECT id, exam_id, status, started_at, deadline, submitted_at, score, graded, question_order, option_order, locked_at \
          FROM exam_attempts WHERE exam_id = ? AND student_id = ?",
     )
     .bind(exam_id)
@@ -424,12 +497,8 @@ pub async fn start(
             "ujian belum dibuka atau sudah ditutup".to_string(),
         ));
     }
-    if let Some(expected) = &exam.token {
-        match input.token.as_deref().map(str::trim) {
-            None | Some("") => return Err(AppError::Forbidden),
-            Some(given) if given != expected => return Err(AppError::Forbidden),
-            _ => {}
-        }
+    if let Some(hash) = &exam.token_hash {
+        check_exam_token(&st.pool, exam_id, student, hash, input.token.as_deref()).await?;
     }
 
     let questions: Vec<(Uuid, String, Option<serde_json::Value>)> = sqlx::query_as(
@@ -520,6 +589,7 @@ pub async fn save_answer(
         settle(&st.pool, &attempt, now, exam.grace_seconds).await?;
         return Err(AppError::Conflict("waktu ujian sudah habis".to_string()));
     }
+    ensure_unlocked(&attempt)?;
 
     let kind_opts: Option<(String, Option<serde_json::Value>)> = sqlx::query_as(
         "SELECT q.kind, q.options FROM exam_questions eq JOIN questions q ON q.id = eq.question_id \
@@ -608,7 +678,44 @@ pub async fn record_event(
         .bind(&input.kind)
         .execute(&st.pool)
         .await?;
-    Ok(Json(serde_json::json!({ "recorded": true })))
+    // Keluar dari halaman ujian mengunci percobaan sampai siswa membukanya kembali.
+    if LOCK_KINDS.contains(&input.kind.as_str()) {
+        sqlx::query("UPDATE exam_attempts SET locked_at = COALESCE(locked_at, UTC_TIMESTAMP(6)) WHERE id = ?")
+            .bind(attempt_id)
+            .execute(&st.pool)
+            .await?;
+    }
+    Ok(Json(
+        serde_json::json!({ "recorded": true, "locked": LOCK_KINDS.contains(&input.kind.as_str()) || attempt.locked_at.is_some() }),
+    ))
+}
+
+/// Membuka kembali percobaan yang terkunci. Dicatat sebagai kejadian "visible".
+pub async fn unlock(
+    State(st): State<AppState>,
+    user: AuthUser,
+    Path(attempt_id): Path<Uuid>,
+) -> AppResult<Json<serde_json::Value>> {
+    require_role(&user, STUDENT_ROLES)?;
+    let student = student_id_for(&st.pool, &user).await?;
+    let attempt = load_attempt(&st.pool, attempt_id, student).await?;
+    if attempt.status != "in_progress" {
+        return Err(AppError::Conflict("percobaan sudah selesai".to_string()));
+    }
+    if attempt.locked_at.is_none() {
+        return Ok(Json(serde_json::json!({ "unlocked": true })));
+    }
+    let mut tx = st.pool.begin().await?;
+    sqlx::query("UPDATE exam_attempts SET locked_at = NULL WHERE id = ?")
+        .bind(attempt_id)
+        .execute(&mut *tx)
+        .await?;
+    sqlx::query("INSERT INTO exam_events (attempt_id, kind) VALUES (?, 'visible')")
+        .bind(attempt_id)
+        .execute(&mut *tx)
+        .await?;
+    tx.commit().await?;
+    Ok(Json(serde_json::json!({ "unlocked": true })))
 }
 
 pub async fn submit(
@@ -631,6 +738,7 @@ pub async fn submit(
             "waktu ujian sudah habis, jawaban tidak diterima".to_string(),
         ));
     }
+    ensure_unlocked(&attempt)?;
 
     finalize(&st.pool, attempt_id, attempt.exam_id, "submitted", now).await?;
     let done = load_attempt(&st.pool, attempt_id, student).await?;

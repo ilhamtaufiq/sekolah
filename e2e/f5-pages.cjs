@@ -73,6 +73,13 @@ async function login(page, email, password) {
   await row.getByRole("button", { name: "Mulai" }).click();
   await student.waitForURL(/\/kerjakan\//);
   await student.getByText("Sisa waktu").waitFor();
+  // Kunci tab: keluar dari halaman mengunci ujian sampai siswa membukanya kembali.
+  // Listener kunci dipasang setelah render; beri jeda singkat agar blur tidak mendahului pemasangan.
+  await student.waitForTimeout(500);
+  await student.evaluate(() => window.dispatchEvent(new Event("blur")));
+  await student.getByText("Ujian terkunci").waitFor({ timeout: 5000 });
+  await student.getByRole("button", { name: "Buka kembali halaman ujian" }).click();
+  await student.getByText("Ujian terkunci").waitFor({ state: "detached", timeout: 5000 });
   await student.getByRole("radio").first().check();
   await student.getByText("Tersimpan").waitFor({ timeout: 8000 });
   await student.getByRole("button", { name: "Berikutnya →" }).click();
@@ -86,7 +93,7 @@ async function login(page, email, password) {
   await student.getByRole("button", { name: "Kumpulkan ujian" }).click();
   await student.getByText("Ujian sudah dikumpulkan").waitFor({ timeout: 8000 });
   await student.screenshot({ path: `${SHOTS}/siswa-selesai.png`, fullPage: true });
-  console.log("siswa: mulai, autosave, dan kumpul berhasil");
+  console.log("siswa: mulai, kunci tab, autosave, dan kumpul berhasil");
 
   await browser.close();
   if (errors.length) {

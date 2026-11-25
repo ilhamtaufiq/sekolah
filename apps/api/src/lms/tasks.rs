@@ -29,6 +29,8 @@ pub struct Task {
     pub max_score: f64,
     pub allow_late: bool,
     pub created_at: DateTime<Utc>,
+    /// Komponen nilai F3 tempat nilai tugas disalin. None = tidak terhubung.
+    pub grade_component_id: Option<Uuid>,
 }
 
 #[derive(Deserialize)]
@@ -39,6 +41,9 @@ pub struct TaskInput {
     pub max_score: f64,
     /// Terima pengumpulan setelah tenggat (ditandai terlambat).
     pub allow_late: bool,
+    /// Komponen nilai F3 pada penugasan ini (opsional).
+    #[serde(default)]
+    pub grade_component_id: Option<Uuid>,
 }
 
 #[derive(Serialize)]
@@ -91,7 +96,7 @@ pub async fn list(
 ) -> AppResult<Json<Vec<Task>>> {
     room_scope(&st.pool, &user, room_id).await?;
     let rows = sqlx::query_as(
-        "SELECT id, title, instructions, due_at, max_score, allow_late, created_at \
+        "SELECT id, title, instructions, due_at, max_score, allow_late, created_at, grade_component_id \
          FROM lms_tasks WHERE assignment_id = ? AND school_id = ? ORDER BY due_at",
     )
     .bind(room_id)
@@ -121,10 +126,28 @@ pub async fn create(
     );
     v.finish()?;
 
+    if let Some(component) = input.grade_component_id {
+        // Komponen harus milik penugasan ini, bukan penugasan lain di sekolah yang sama.
+        let ok: Option<i64> = sqlx::query_scalar(
+            "SELECT 1 FROM grade_components WHERE id = ? AND school_id = ? AND assignment_id = ?",
+        )
+        .bind(component)
+        .bind(user.school_id)
+        .bind(room_id)
+        .fetch_optional(&st.pool)
+        .await?;
+        if ok.is_none() {
+            return Err(AppError::Validation(vec![FieldIssue::new(
+                "grade_component_id",
+                "komponen nilai tidak ditemukan pada penugasan ini",
+            )]));
+        }
+    }
+
     let id = Uuid::new_v4();
     sqlx::query(
-        "INSERT INTO lms_tasks (id, school_id, assignment_id, title, instructions, due_at, max_score, allow_late, created_by) \
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO lms_tasks (id, school_id, assignment_id, title, instructions, due_at, max_score, allow_late, \
+         created_by, grade_component_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(id)
     .bind(user.school_id)
@@ -135,6 +158,7 @@ pub async fn create(
     .bind(input.max_score)
     .bind(input.allow_late)
     .bind(user.user_id)
+    .bind(input.grade_component_id)
     .execute(&st.pool)
     .await?;
 
@@ -144,7 +168,7 @@ pub async fn create(
 
 async fn load_task(pool: &sqlx::MySqlPool, school_id: Uuid, id: Uuid) -> AppResult<Task> {
     sqlx::query_as(
-        "SELECT id, title, instructions, due_at, max_score, allow_late, created_at \
+        "SELECT id, title, instructions, due_at, max_score, allow_late, created_at, grade_component_id \
          FROM lms_tasks WHERE id = ? AND school_id = ?",
     )
     .bind(id)
@@ -398,14 +422,63 @@ async fn write_submission(
 }
 
 /// Guru memberi nilai dan umpan balik. Nilai dibatasi 0 sampai nilai maksimum tugas.
+/// Menyalin nilai tugas ke komponen nilai F3. Skor diskalakan dari skala tugas
+/// ke rentang nilai format raport aktif (min..max), lalu disimpan sebagai entri nilai.
+#[allow(clippy::too_many_arguments)]
+async fn sync_grade_entry(
+    pool: &sqlx::MySqlPool,
+    school_id: Uuid,
+    updated_by: Uuid,
+    component_id: Uuid,
+    student_id: Uuid,
+    task_title: &str,
+    score: f64,
+    task_max: f64,
+) -> AppResult<f64> {
+    let format = crate::report_format::load_current(pool, school_id).await?;
+    let (lo, hi) = (
+        format.config.grading.min_score,
+        format.config.grading.max_score,
+    );
+    let scaled = lo + (score / task_max) * (hi - lo);
+    let note: String = format!("Dari tugas: {task_title}")
+        .chars()
+        .take(180)
+        .collect();
+
+    sqlx::query(
+        "INSERT INTO grade_entries (id, school_id, component_id, student_id, score, note, updated_by) \
+         VALUES (?, ?, ?, ?, ?, ?, ?) AS new \
+         ON DUPLICATE KEY UPDATE score = new.score, note = new.note, updated_by = new.updated_by, \
+             updated_at = UTC_TIMESTAMP(6)",
+    )
+    .bind(Uuid::new_v4())
+    .bind(school_id)
+    .bind(component_id)
+    .bind(student_id)
+    .bind(scaled)
+    .bind(note)
+    .bind(updated_by)
+    .execute(pool)
+    .await?;
+    Ok(scaled)
+}
+
 pub async fn grade(
     State(st): State<AppState>,
     user: AuthUser,
     Path(sub_id): Path<Uuid>,
     Json(input): Json<GradeInput>,
 ) -> AppResult<Json<SubmissionView>> {
-    let (task_id, student_id, assignment, max_score): (Uuid, Uuid, Uuid, f64) = sqlx::query_as(
-        "SELECT s.task_id, s.student_id, t.assignment_id, t.max_score \
+    let (task_id, student_id, assignment, max_score, component, title): (
+        Uuid,
+        Uuid,
+        Uuid,
+        f64,
+        Option<Uuid>,
+        String,
+    ) = sqlx::query_as(
+        "SELECT s.task_id, s.student_id, t.assignment_id, t.max_score, t.grade_component_id, t.title \
          FROM lms_submissions s JOIN lms_tasks t ON t.id = s.task_id \
          WHERE s.id = ? AND s.school_id = ?",
     )
@@ -436,6 +509,20 @@ pub async fn grade(
     .bind(sub_id)
     .execute(&st.pool)
     .await?;
+
+    if let Some(component_id) = component {
+        sync_grade_entry(
+            &st.pool,
+            user.school_id,
+            user.user_id,
+            component_id,
+            student_id,
+            &title,
+            input.score,
+            max_score,
+        )
+        .await?;
+    }
 
     let view = submission_views(&st.pool, task_id, Some(student_id))
         .await?

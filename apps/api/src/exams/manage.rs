@@ -35,7 +35,9 @@ pub struct ExamRow {
     pub window_end: DateTime<Utc>,
     pub shuffle_questions: bool,
     pub shuffle_options: bool,
-    pub token: Option<String>,
+    /// Keadaan token: "none" (tanpa token), "set" (terpasang), atau "reset" (wajib diatur ulang).
+    /// Nilai token itu sendiri tidak pernah dikirim ke klien.
+    pub token_state: String,
     pub status: String,
     pub question_count: i64,
     pub total_points: i64,
@@ -55,7 +57,11 @@ pub struct ExamInput {
     pub window_end: DateTime<Utc>,
     pub shuffle_questions: bool,
     pub shuffle_options: bool,
+    /// Token baru (4–20 huruf/angka). Kosong = biarkan token yang sekarang.
     pub token: Option<String>,
+    /// Hapus token yang sudah ada.
+    #[serde(default)]
+    pub clear_token: bool,
 }
 
 #[derive(Deserialize)]
@@ -131,11 +137,18 @@ pub struct EssayScoreInput {
     pub score: u32,
 }
 
+/// Hash argon2 dari token. Token tidak pernah disimpan sebagai teks biasa.
+fn hash_token(token: Option<&str>) -> AppResult<Option<String>> {
+    token
+        .map(|t| crate::auth::hash_password(t).map_err(AppError::Internal))
+        .transpose()
+}
+
 /// Admin, atau guru pengampu penugasan paket ini.
 async fn load_for_teacher(pool: &MySqlPool, user: &AuthUser, exam_id: Uuid) -> AppResult<ExamRow> {
     let sql_row: ExamRow = sqlx::query_as(
         "SELECT e.id, e.assignment_id, ta.class_id, c.name AS class_name, s.id AS subject_id, s.name AS subject_name, \
-         e.title, e.duration_minutes, e.window_start, e.window_end, e.shuffle_questions, e.shuffle_options, e.token, e.status, \
+         e.title, e.duration_minutes, e.window_start, e.window_end, e.shuffle_questions, e.shuffle_options, CASE WHEN e.token_hash IS NULL THEN 'none' WHEN e.token_hash = '!reset' THEN 'reset' ELSE 'set' END AS token_state, e.status, \
          CAST((SELECT COUNT(*) FROM exam_questions eq WHERE eq.exam_id = e.id) AS SIGNED) AS question_count, \
          CAST(COALESCE((SELECT SUM(eq.points) FROM exam_questions eq WHERE eq.exam_id = e.id), 0) AS SIGNED) AS total_points \
          FROM exams e \
@@ -180,9 +193,9 @@ fn validate(input: &ExamInput) -> AppResult<(String, Option<String>)> {
     let token = v.opt_text("token", input.token.as_deref(), 20);
     if let Some(t) = &token {
         v.require(
-            t.chars().all(|c| c.is_ascii_alphanumeric()) && t.len() >= 4,
+            t.chars().all(|c| c.is_ascii_alphanumeric()) && t.len() >= 6,
             "token",
-            "token 4–20 karakter huruf atau angka",
+            "token 6–20 karakter huruf atau angka",
         );
     }
     v.finish()?;
@@ -219,7 +232,7 @@ pub async fn list(
     require_role(&user, TEACH_ROLES)?;
     let rows: Vec<ExamRow> = sqlx::query_as(
         "SELECT e.id, e.assignment_id, ta.class_id, c.name AS class_name, s.id AS subject_id, s.name AS subject_name, \
-         e.title, e.duration_minutes, e.window_start, e.window_end, e.shuffle_questions, e.shuffle_options, e.token, e.status, \
+         e.title, e.duration_minutes, e.window_start, e.window_end, e.shuffle_questions, e.shuffle_options, CASE WHEN e.token_hash IS NULL THEN 'none' WHEN e.token_hash = '!reset' THEN 'reset' ELSE 'set' END AS token_state, e.status, \
          CAST((SELECT COUNT(*) FROM exam_questions eq WHERE eq.exam_id = e.id) AS SIGNED) AS question_count, \
          CAST(COALESCE((SELECT SUM(eq.points) FROM exam_questions eq WHERE eq.exam_id = e.id), 0) AS SIGNED) AS total_points \
          FROM exams e \
@@ -253,7 +266,7 @@ pub async fn create(
     let id = Uuid::new_v4();
     sqlx::query(
         "INSERT INTO exams (id, school_id, assignment_id, title, duration_minutes, window_start, window_end, \
-         shuffle_questions, shuffle_options, token, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+         shuffle_questions, shuffle_options, token_hash, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(id)
     .bind(user.school_id)
@@ -264,7 +277,7 @@ pub async fn create(
     .bind(input.window_end)
     .bind(input.shuffle_questions)
     .bind(input.shuffle_options)
-    .bind(&token)
+    .bind(hash_token(token.as_deref())?)
     .bind(user.user_id)
     .execute(&st.pool)
     .await?;
@@ -329,7 +342,9 @@ pub async fn update(
 
     sqlx::query(
         "UPDATE exams SET assignment_id = ?, title = ?, duration_minutes = ?, window_start = ?, window_end = ?, \
-         shuffle_questions = ?, shuffle_options = ?, token = ? WHERE id = ? AND school_id = ? AND status = 'draft'",
+         shuffle_questions = ?, shuffle_options = ?, \
+         token_hash = CASE WHEN ? THEN NULL WHEN ? IS NOT NULL THEN ? ELSE token_hash END \
+         WHERE id = ? AND school_id = ? AND status = 'draft'",
     )
     .bind(input.assignment_id)
     .bind(&title)
@@ -338,7 +353,9 @@ pub async fn update(
     .bind(input.window_end)
     .bind(input.shuffle_questions)
     .bind(input.shuffle_options)
-    .bind(&token)
+    .bind(input.clear_token)
+    .bind(hash_token(token.as_deref())?.clone())
+    .bind(hash_token(token.as_deref())?)
     .bind(id)
     .bind(user.school_id)
     .execute(&st.pool)
@@ -663,4 +680,68 @@ pub async fn attempt_answers(
     .fetch_all(&st.pool)
     .await?;
     Ok(Json(rows))
+}
+
+#[derive(Serialize)]
+pub struct PreviewQuestion {
+    pub id: Uuid,
+    pub position: i64,
+    pub kind: String,
+    pub body: String,
+    pub points: i64,
+    pub options: Vec<QuestionOption>,
+}
+
+#[derive(Serialize)]
+pub struct PreviewExam {
+    pub exam_id: Uuid,
+    pub title: String,
+    pub duration_minutes: u32,
+    pub questions: Vec<PreviewQuestion>,
+}
+
+/// Mode tes untuk guru dan admin. Tidak membuat percobaan, tidak dikunci, tidak dicatat,
+/// dan tidak pernah menyertakan kunci jawaban.
+pub async fn preview(
+    State(st): State<AppState>,
+    user: AuthUser,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<PreviewExam>> {
+    require_role(&user, TEACH_ROLES)?;
+    let exam = load_for_teacher(&st.pool, &user, id).await?;
+
+    let rows: Vec<(Uuid, i64, String, String, Option<serde_json::Value>, i64)> = sqlx::query_as(
+        "SELECT q.id, CAST(eq.position AS SIGNED), q.kind, q.body, q.options, CAST(eq.points AS SIGNED) \
+         FROM exam_questions eq JOIN questions q ON q.id = eq.question_id \
+         WHERE eq.exam_id = ? ORDER BY eq.position",
+    )
+    .bind(id)
+    .fetch_all(&st.pool)
+    .await?;
+
+    let questions = rows
+        .into_iter()
+        .map(|(qid, position, kind, body, options, points)| {
+            let options: Vec<QuestionOption> = options
+                .map(serde_json::from_value)
+                .transpose()
+                .map_err(|e| AppError::Internal(e.into()))?
+                .unwrap_or_default();
+            Ok(PreviewQuestion {
+                id: qid,
+                position,
+                kind,
+                body,
+                points,
+                options,
+            })
+        })
+        .collect::<AppResult<Vec<_>>>()?;
+
+    Ok(Json(PreviewExam {
+        exam_id: id,
+        title: exam.title,
+        duration_minutes: exam.duration_minutes,
+        questions,
+    }))
 }

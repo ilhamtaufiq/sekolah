@@ -116,6 +116,7 @@ pub fn build(state: AppState) -> Router {
             get(grades::notes::list).put(grades::notes::save),
         )
         .route("/api/report-cards", get(grades::reports::list))
+        .route("/api/me/report-cards", get(grades::reports::mine))
         .route(
             "/api/report-cards/generate",
             post(grades::reports::generate),
@@ -170,6 +171,7 @@ pub fn build(state: AppState) -> Router {
             put(exams::manage::set_questions),
         )
         .route("/api/exams/{id}/publish", post(exams::manage::publish))
+        .route("/api/exams/{id}/preview", get(exams::manage::preview))
         .route("/api/exams/{id}/attempts", get(exams::manage::attempts))
         .route("/api/exams/{id}/analysis", get(exams::manage::analysis))
         .route(
@@ -196,6 +198,10 @@ pub fn build(state: AppState) -> Router {
         .route(
             "/api/student/attempts/{id}/events",
             post(exams::attempts::record_event),
+        )
+        .route(
+            "/api/student/attempts/{id}/unlock",
+            post(exams::attempts::unlock),
         )
         .route(
             "/api/student/attempts/{id}/submit",

@@ -24,7 +24,7 @@ export type ExamRow = {
   window_end: string;
   shuffle_questions: boolean;
   shuffle_options: boolean;
-  token: string | null;
+  token_state: "none" | "set" | "reset";
   status: "draft" | "published";
   question_count: number;
   total_points: number;
@@ -113,6 +113,7 @@ export type AttemptView = {
   submitted_at: string | null;
   score: number | null;
   server_now: string;
+  locked: boolean;
   questions: TakeQuestion[];
 };
 

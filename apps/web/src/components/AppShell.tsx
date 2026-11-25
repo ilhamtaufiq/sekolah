@@ -22,6 +22,7 @@ const nav = [
   { to: "/bank-soal", label: "Bank soal", roles: TEACHING },
   { to: "/ujian", label: "Ujian", roles: TEACHING },
   { to: "/ujian-saya", label: "Ujian saya", roles: ["siswa"] },
+  { to: "/raport-saya", label: "Raport saya", roles: ["siswa"] },
 ];
 
 export function AppShell() {

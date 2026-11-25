@@ -23,10 +23,30 @@ export function ExamDetailPage() {
 
   const [picked, setPicked] = useState<string[] | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [newToken, setNewToken] = useState("");
   const isDraft = detail.data?.status === "draft";
   const selected = picked ?? detail.data?.questions.map((q) => q.question_id) ?? [];
 
   const invalidate = [["exam", id], ["exams"], ["exam-analysis", id]];
+  // Token tidak bisa dilihat ulang setelah disimpan. Mengganti token = mengirim token baru.
+  const saveToken = useApiMutation<{ token: string | null }, ExamDetail>(
+    {
+      method: "PUT",
+      path: () => `/exams/${id}`,
+      body: ({ token }) => ({
+        assignment_id: detail.data?.assignment_id,
+        title: detail.data?.title,
+        duration_minutes: detail.data?.duration_minutes,
+        window_start: detail.data?.window_start,
+        window_end: detail.data?.window_end,
+        shuffle_questions: detail.data?.shuffle_questions,
+        shuffle_options: detail.data?.shuffle_options,
+        token,
+        clear_token: token === null,
+      }),
+    },
+    invalidate,
+  );
   const saveQuestions = useApiMutation<void, ExamDetail>(
     { method: "PUT", path: () => `/exams/${id}/questions`, body: () => ({ question_ids: selected }) },
     invalidate,
@@ -73,10 +93,44 @@ export function ExamDetailPage() {
         <p className="text-sm text-slate-600">
           {exam.class_name} · {exam.subject_name} · {exam.duration_minutes} menit · {formatWhen(exam.window_start)} – {formatWhen(exam.window_end)}
         </p>
-        {exam.token && <p className="text-sm text-slate-600">Token ujian: <span className="font-mono font-semibold">{exam.token}</span></p>}
+        <div className="space-y-2 text-sm text-slate-600">
+          <p>
+            Token:{" "}
+            {exam.token_state === "set" && "terpasang (tersimpan sebagai hash, tidak bisa dilihat ulang)"}
+            {exam.token_state === "none" && "tidak ada (paket bisa dikerjakan tanpa token)"}
+            {exam.token_state === "reset" && (
+              <span className="font-medium text-amber-700">perlu diatur ulang; siswa belum bisa masuk sampai token baru disimpan</span>
+            )}
+          </p>
+          {isDraft && (
+            <form
+              className="flex flex-wrap items-end gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                saveToken.mutate({ token: newToken.trim() });
+                setNewToken("");
+              }}
+            >
+              <Field label="Token baru" hint="6–20 huruf atau angka">
+                <Input value={newToken} onChange={(e) => setNewToken(e.target.value)} maxLength={20} />
+              </Field>
+              <Button type="submit" variant="secondary" disabled={newToken.trim().length < 6 || saveToken.isPending}>
+                Simpan token
+              </Button>
+              {exam.token_state !== "none" && (
+                <Button type="button" variant="ghost" onClick={() => saveToken.mutate({ token: null })} disabled={saveToken.isPending}>
+                  Hapus token
+                </Button>
+              )}
+            </form>
+          )}
+          <Link to={`/ujian/${id}/tes`} className="inline-block text-brand-700 hover:underline">
+            Coba ujian (mode tes, tidak dikunci dan tidak dicatat) →
+          </Link>
+        </div>
       </header>
 
-      <ErrorAlert error={saveQuestions.error ?? publish.error} />
+      <ErrorAlert error={saveQuestions.error ?? publish.error ?? saveToken.error} />
       {notice && <Alert tone="success">{notice}</Alert>}
 
       <Card

@@ -462,3 +462,31 @@ pub async fn download(
         .body(Body::from(bytes))
         .map_err(|e| AppError::Internal(e.into()))
 }
+
+#[derive(Serialize, FromRow)]
+pub struct MyReportRow {
+    pub id: Uuid,
+    pub semester_name: String,
+    pub academic_year: String,
+    pub format_version: i32,
+    pub generated_at: chrono::DateTime<chrono::Utc>,
+}
+
+/// Daftar raport milik siswa yang sedang login. Siswa hanya melihat raportnya sendiri.
+pub async fn mine(State(st): State<AppState>, user: AuthUser) -> AppResult<Json<Vec<MyReportRow>>> {
+    require_role(&user, &[Role::Siswa])?;
+    let rows = sqlx::query_as(
+        "SELECT r.id, se.name AS semester_name, ay.name AS academic_year, r.format_version, r.generated_at \
+         FROM report_cards r \
+         JOIN students s ON s.id = r.student_id \
+         JOIN semesters se ON se.id = r.semester_id \
+         JOIN academic_years ay ON ay.id = se.academic_year_id \
+         WHERE s.user_id = ? AND r.school_id = ? \
+         ORDER BY ay.starts_on DESC, se.ordinal DESC",
+    )
+    .bind(user.user_id)
+    .bind(user.school_id)
+    .fetch_all(&st.pool)
+    .await?;
+    Ok(Json(rows))
+}
