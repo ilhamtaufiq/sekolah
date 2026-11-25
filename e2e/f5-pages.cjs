@@ -66,6 +66,8 @@ async function login(page, email, password) {
   student.on("console", (m) => { if (m.type() === "error") errors.push(`siswa console: ${m.text()}`); });
   student.on("dialog", (d) => d.accept());
   await login(student, fixture.student_email, fixture.student_password);
+  // Beranda siswa adalah ruang kelas (gabungan F4). Ujian dibuka lewat menu "Ujian saya".
+  await student.goto(`${WEB}/ujian-saya`);
   await student.waitForURL(`${WEB}/ujian-saya`);
   const row = student.getByRole("row").filter({ hasText: title });
   await row.getByRole("button", { name: "Mulai" }).click();
