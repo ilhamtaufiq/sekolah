@@ -180,4 +180,40 @@ mod tests {
         data["grades"] = serde_json::json!([]);
         assert!(render_pdf(&data).is_ok());
     }
+
+    #[test]
+    fn format_lama_tanpa_blok_baru_tetap_bisa_dirender() {
+        // Data tanpa kunci sikap, ekstrakurikuler_items, dan mastery (format sebelum 0012).
+        let data = sample();
+        assert!(data.get("mastery").is_none());
+        assert!(render_pdf(&data).is_ok());
+    }
+
+    #[test]
+    fn blok_sikap_ekstrakurikuler_dan_ketuntasan_dirender() {
+        let mut data = sample();
+        data["sections"] = serde_json::json!(["sikap", "ekstrakurikuler", "ketuntasan_tujuan"]);
+        data["sikap"] = serde_json::json!([
+            {"aspect": "Spiritual", "predicate": "A", "description": "Rajin berdoa"},
+            {"aspect": "Sosial", "predicate": "B", "description": null}
+        ]);
+        data["ekstrakurikuler_items"] = serde_json::json!([
+            {"name": "Pramuka", "predicate": "A", "description": "Aktif & disiplin"}
+        ]);
+        data["mastery"] = serde_json::json!({
+            "tuntas": 1, "belum_tuntas": 1, "total": 2, "mapel_belum": ["IPA"]
+        });
+        let pdf = render_pdf(&data).expect("blok baru harus bisa dirender");
+        assert!(pdf.starts_with(b"%PDF"));
+    }
+
+    #[test]
+    fn ketuntasan_tanpa_nilai_akhir_tetap_dirender() {
+        let mut data = sample();
+        data["sections"] = serde_json::json!(["ketuntasan_tujuan"]);
+        data["mastery"] = serde_json::json!({
+            "tuntas": 0, "belum_tuntas": 0, "total": 0, "mapel_belum": []
+        });
+        assert!(render_pdf(&data).is_ok());
+    }
 }

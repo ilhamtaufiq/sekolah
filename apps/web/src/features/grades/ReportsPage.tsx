@@ -5,6 +5,8 @@ import { useAuth } from "../../lib/auth";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import type { ClassRow } from "../academic/types";
 import { downloadPdf } from "./api";
+import { MasteryCard } from "./MasteryCard";
+import { SikapCard } from "./SikapCard";
 import type { ReportCard, Semester, TermNote } from "./types";
 
 type Draft = { attitude: string; extracurricular: string; homeroom_note: string };
@@ -150,6 +152,9 @@ export function ReportsPage() {
           );
         })}
       </Card>
+
+      <SikapCard classId={effClass} semesterId={effSemester} canEdit={canEdit} isAdmin={user?.role === "admin"} />
+      <MasteryCard classId={effClass} semesterId={effSemester} />
 
       <Card
         title="Raport"

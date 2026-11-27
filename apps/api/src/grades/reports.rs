@@ -194,6 +194,8 @@ pub async fn generate(
         .into_iter()
         .map(|(sid, a, e, h)| (sid, (a, e, h)))
         .collect();
+    let attitudes = notes::attitudes_for_report(&st.pool, school, input.semester_id).await?;
+    let extras = notes::extras_for_report(&st.pool, school, input.semester_id).await?;
 
     let averages: Vec<(Uuid, Option<f64>)> = students
         .iter()
@@ -233,6 +235,8 @@ pub async fn generate(
                 nis,
                 grades_by_student.get(sid).cloned().unwrap_or_default(),
                 (notes_a, notes_e, notes_h),
+                attitudes.get(sid).cloned().unwrap_or_default(),
+                extras.get(sid).cloned().unwrap_or_default(),
                 abs,
                 rank,
             );
@@ -295,6 +299,8 @@ fn build_data(
     nis: &str,
     grades: Vec<GradeRow>,
     notes: TermNoteParts,
+    sikap: Vec<notes::AttitudeEntry>,
+    ekskul: Vec<notes::ExtraEntry>,
     absences: notes::Absences,
     rank: Option<(usize, usize, f64)>,
 ) -> serde_json::Value {
@@ -304,6 +310,33 @@ fn build_data(
         PaperSize::F4 => (215.0, 330.0),
         PaperSize::Letter => (216.0, 279.0),
     };
+    // Ketuntasan dihitung dari KKM yang tersimpan di nilai akhir. Mapel tanpa nilai tidak dihitung.
+    let tuntas_count = grades.iter().filter(|g| g.3 == Some(true)).count();
+    let mapel_belum: Vec<String> = grades
+        .iter()
+        .filter(|g| g.3 == Some(false))
+        .map(|g| g.0.clone())
+        .collect();
+    let mastery = serde_json::json!({
+        "tuntas": tuntas_count,
+        "belum_tuntas": mapel_belum.len(),
+        "total": tuntas_count + mapel_belum.len(),
+        "mapel_belum": mapel_belum,
+    });
+    let sikap_json: Vec<serde_json::Value> = sikap
+        .into_iter()
+        .map(|(aspect, predicate, description)| {
+            let aspect = if aspect == "spiritual" { "Spiritual" } else { "Sosial" };
+            serde_json::json!({ "aspect": aspect, "predicate": predicate, "description": description })
+        })
+        .collect();
+    let ekskul_json: Vec<serde_json::Value> = ekskul
+        .into_iter()
+        .map(|(name, predicate, description)| {
+            serde_json::json!({ "name": name, "predicate": predicate, "description": description })
+        })
+        .collect();
+
     let grades_json: Vec<serde_json::Value> = grades
         .into_iter()
         .map(|(subject, score, predicate, kkm)| {
@@ -359,6 +392,9 @@ fn build_data(
         "notes": { "attitude": notes.0, "extracurricular": notes.1, "homeroom": notes.2 },
         "absences": { "sakit": absences.sakit, "izin": absences.izin, "alpa": absences.alpa },
         "rank": rank_json,
+        "sikap": sikap_json,
+        "ekstrakurikuler_items": ekskul_json,
+        "mastery": mastery,
         "predicates": predicates,
         "signatures": {
             "city": format.signatures.city,

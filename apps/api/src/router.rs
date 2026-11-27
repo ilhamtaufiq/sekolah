@@ -122,6 +122,24 @@ pub fn build(state: AppState) -> Router {
             post(grades::reports::generate),
         )
         .route("/api/report-cards/{id}/pdf", get(grades::reports::download))
+        // Rapor: sikap, ekstrakurikuler, dan ketuntasan tujuan (0012)
+        .route(
+            "/api/term-attitudes",
+            get(grades::notes::list_attitudes).put(grades::notes::save_attitudes),
+        )
+        .route(
+            "/api/term-extracurriculars",
+            get(grades::notes::list_extracurriculars).put(grades::notes::save_extracurriculars),
+        )
+        .route(
+            "/api/extracurricular-activities",
+            get(grades::notes::list_activities).post(grades::notes::create_activity),
+        )
+        .route(
+            "/api/extracurricular-activities/{id}",
+            delete(grades::notes::delete_activity),
+        )
+        .route("/api/term-mastery", get(grades::finals::mastery))
         // LMS (F4)
         .route("/api/lms/rooms", get(lms::rooms))
         .route(

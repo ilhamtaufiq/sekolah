@@ -33,3 +33,33 @@ export type ReportCard = {
   format_version: number;
   generated_at: string;
 };
+
+/** Predikat sikap dan ekstrakurikuler. Hanya A sampai D. */
+export type Predikat = "A" | "B" | "C" | "D";
+
+export type AttitudeCell = { predicate: Predikat; description: string | null };
+
+export type AttitudeRow = {
+  student_id: string;
+  nis: string;
+  name: string;
+  spiritual: AttitudeCell | null;
+  sosial: AttitudeCell | null;
+};
+
+export type Activity = { id: string; name: string };
+
+export type ExtraItem = { activity_id: string; activity: string; predicate: Predikat; description: string | null };
+
+export type ExtraRow = { student_id: string; nis: string; name: string; items: ExtraItem[] };
+
+export type MasteryItem = { subject: string; score: number | null; tuntas: boolean | null };
+
+export type MasteryRow = {
+  student_id: string;
+  nis: string;
+  name: string;
+  subjects: MasteryItem[];
+  tuntas: number;
+  belum_tuntas: number;
+};
