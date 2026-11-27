@@ -111,6 +111,8 @@ export type Summary = {
     total: number;
     present_rate: number | null;
   };
+  attendance_week: { date: string; present_rate: number }[];
+  grade_distribution: { predicate: string; count: number }[];
 };
 
 export const DAYS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];

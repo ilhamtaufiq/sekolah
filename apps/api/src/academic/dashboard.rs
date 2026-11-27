@@ -10,6 +10,18 @@ use crate::{
 };
 
 #[derive(Serialize)]
+pub struct DayRate {
+    pub date: String,
+    pub present_rate: f64,
+}
+
+#[derive(Serialize)]
+pub struct GradeBucket {
+    pub predicate: String,
+    pub count: i64,
+}
+
+#[derive(Serialize)]
 pub struct Summary {
     pub active_year: Option<String>,
     pub active_students: i64,
@@ -17,6 +29,10 @@ pub struct Summary {
     pub teachers: i64,
     pub assignments: i64,
     pub today: Today,
+    /// Tren kehadiran 7 hari terakhir yang punya catatan, urut dari yang terlama.
+    pub attendance_week: Vec<DayRate>,
+    /// Distribusi predikat nilai akhir untuk semester terbaru di tahun ajaran aktif.
+    pub grade_distribution: Vec<GradeBucket>,
 }
 
 #[derive(Serialize)]
@@ -77,7 +93,46 @@ pub async fn summary(State(st): State<AppState>, user: AuthUser) -> AppResult<Js
     let present_rate =
         (total > 0).then(|| ((present as f64 / total as f64) * 1000.0).round() / 10.0);
 
+    // Tren kehadiran: mundur hingga 14 hari kalender, ambil 7 hari yang punya catatan.
+    let mut attendance_week: Vec<DayRate> = Vec::new();
+    for back in 0..14 {
+        let day = date - chrono::Duration::days(back);
+        let (_, p, t) = daily_totals(&st.pool, sid, day).await?;
+        if t > 0 {
+            let rate = ((p as f64 / t as f64) * 1000.0).round() / 10.0;
+            attendance_week.push(DayRate { date: day.to_string(), present_rate: rate });
+            if attendance_week.len() == 7 {
+                break;
+            }
+        }
+    }
+    attendance_week.reverse();
+
+    // Distribusi predikat untuk semester terbaru yang sudah punya nilai akhir.
+    let grade_distribution: Vec<GradeBucket> = match &year {
+        Some((year_id, _)) => sqlx::query_as::<_, (String, i64)>(
+            "SELECT f.predicate, COUNT(*) FROM final_grades f \
+             JOIN semesters s ON s.id = f.semester_id \
+             WHERE f.school_id = ? AND f.predicate IS NOT NULL AND s.academic_year_id = ? \
+               AND s.ordinal = (SELECT MAX(s2.ordinal) FROM final_grades f2 \
+                                JOIN semesters s2 ON s2.id = f2.semester_id \
+                                WHERE s2.academic_year_id = ? AND f2.predicate IS NOT NULL) \
+             GROUP BY f.predicate ORDER BY f.predicate",
+        )
+        .bind(sid)
+        .bind(year_id)
+        .bind(year_id)
+        .fetch_all(&st.pool)
+        .await?
+        .into_iter()
+        .map(|(predicate, count)| GradeBucket { predicate, count })
+        .collect(),
+        None => Vec::new(),
+    };
+
     Ok(Json(Summary {
+        attendance_week,
+        grade_distribution,
         active_year: year.map(|(_, name)| name),
         active_students,
         classes,
