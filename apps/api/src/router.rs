@@ -227,6 +227,23 @@ pub fn build(state: AppState) -> Router {
             "/api/student/attempts/{id}/submit",
             post(exams::attempts::submit),
         )
+        // Jurnal mengajar (persetujuan kepala sekolah)
+        .route(
+            "/api/jurnal",
+            get(crate::jurnal::crud::list).post(crate::jurnal::crud::create),
+        )
+        .route("/api/jurnal/rekap", get(crate::jurnal::rekap::range))
+        .route(
+            "/api/jurnal/rekap/assignments/{id}",
+            get(crate::jurnal::rekap::assignment),
+        )
+        .route(
+            "/api/jurnal/{id}",
+            get(crate::jurnal::crud::get).put(crate::jurnal::crud::update),
+        )
+        .route("/api/jurnal/{id}/submit", post(crate::jurnal::crud::submit))
+        .route("/api/jurnal/{id}/approve", post(crate::jurnal::review::approve))
+        .route("/api/jurnal/{id}/reject", post(crate::jurnal::review::reject))
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }

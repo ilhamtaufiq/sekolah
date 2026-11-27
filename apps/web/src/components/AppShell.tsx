@@ -24,6 +24,9 @@ const nav = [
   { to: "/ujian", label: "Ujian", roles: TEACHING },
   { to: "/ujian-saya", label: "Ujian saya", roles: ["siswa"] },
   { to: "/raport-saya", label: "Raport saya", roles: ["siswa"] },
+  // Jurnal mengajar
+  { to: "/jurnal", label: "Jurnal mengajar", roles: TEACHING },
+  { to: "/persetujuan-jurnal", label: "Persetujuan jurnal", roles: LEADERSHIP },
 ];
 
 export function AppShell() {

@@ -16,6 +16,10 @@ import { GradesPage } from "./features/grades/GradesPage";
 import { ReportsPage } from "./features/grades/ReportsPage";
 import { RoomsPage, RoomPage } from "./features/lms/RoomsPage";
 import { TaskPage } from "./features/lms/TaskPage";
+// Jurnal mengajar
+import { JurnalPage } from "./features/jurnal/JurnalPage";
+import { JournalFormPage } from "./features/jurnal/JournalFormPage";
+import { PersetujuanJurnalPage } from "./features/jurnal/PersetujuanJurnalPage";
 
 /** Siswa tidak punya beranda admin; langsung ke ruang kelas. */
 function HomeRoute() {
@@ -74,6 +78,10 @@ export function App() {
           <Route path="pembelajaran/:id" element={<LessonPage />} />
           <Route path="ujian-saya" element={<StudentExamsPage />} />
           <Route path="kerjakan/:attemptId" element={<TakeExamPage />} />
+          {/* Jurnal mengajar */}
+          <Route path="jurnal" element={<JurnalPage />} />
+          <Route path="jurnal/:id" element={<JournalFormPage />} />
+          <Route path="persetujuan-jurnal" element={<PersetujuanJurnalPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
