@@ -43,7 +43,7 @@ export function AppShell() {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex shrink-0 items-center gap-2 font-semibold">
-              <span className="flex size-7 items-center justify-center rounded-md bg-brand-600 text-sm text-white">S</span>
+              <img src={`${import.meta.env.BASE_URL}logo-mark.png`} alt="" className="size-8 object-contain" />
               SCHID
             </span>
           </div>

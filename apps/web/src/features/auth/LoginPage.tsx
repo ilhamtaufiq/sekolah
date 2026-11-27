@@ -41,7 +41,7 @@ export function LoginPage() {
     <div className="flex min-h-dvh items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <div className="mx-auto flex size-11 items-center justify-center rounded-xl bg-brand-600 text-lg font-bold text-white">S</div>
+          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="SCHID" className="mx-auto h-28 w-auto object-contain" />
           <h1 className="mt-4 text-xl font-semibold">Masuk ke SCHID</h1>
           <p className="mt-1 text-sm text-slate-500">Gunakan akun yang diberikan admin sekolah.</p>
         </div>

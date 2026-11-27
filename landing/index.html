@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="description" content="SCHID: sistem manajemen untuk sekolah, PKBM, PAUD, dan TK. Akademik, nilai, raport, pembelajaran, dan ujian dalam satu aplikasi." />
   <meta name="claude:viewport-fit-sides" content="cover" />
+  <link rel="icon" href="/app/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/app/favicon-32.png" />
+  <link rel="apple-touch-icon" href="/app/apple-touch-icon.png" />
   <title>SCHID — Manajemen Sekolah, PKBM, PAUD &amp; TK</title>
   <style>
     :root {
@@ -101,9 +104,7 @@
     .nav { display: flex; align-items: center; justify-content: space-between; height: 64px; }
     .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; text-decoration: none; }
     .mark {
-      width: 28px; height: 28px; border-radius: 8px;
-      background: var(--accent); color: var(--accent-ink);
-      display: grid; place-items: center; font-size: 14px; font-weight: 700;
+      width: 32px; height: 32px; object-fit: contain;
     }
     .nav-links { display: flex; gap: 24px; align-items: center; font-size: 15px; }
     .nav-links a { text-decoration: none; color: var(--muted); }
@@ -167,7 +168,7 @@
   <header class="top">
     <div class="wrap nav">
       <a class="brand" href="#">
-        <span class="mark">S</span>
+        <img class="mark" src="/app/logo-mark.png" alt="" width="32" height="32" />
         <span>SCHID</span>
       </a>
       <nav class="nav-links" aria-label="Navigasi utama">
