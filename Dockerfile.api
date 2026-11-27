@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
-# Build context: root repo. Dibuat multi-stage dengan cargo-chef agar dependency ter-cache.
+# Build context: root repo. cargo-chef menjaga layer dependency tetap ter-cache.
+# Cache mount BuildKit menyimpan registry Cargo dan target antar build.
 
-FROM rust:1-bookworm AS chef
-RUN cargo install cargo-chef --locked
+FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
 WORKDIR /app
 
 FROM chef AS planner
@@ -11,16 +11,22 @@ RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
 COPY --from=planner /app/recipe.json recipe.json
-RUN cargo chef cook --release --recipe-path recipe.json
+RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
+    --mount=type=cache,target=/app/target,sharing=locked \
+    cargo chef cook --release --recipe-path recipe.json
 COPY apps/api/ ./
-RUN cargo build --release --bin simas-api
+# Mount target yang sama dengan langkah cook: dependensi tidak dibangun ulang.
+RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
+    --mount=type=cache,target=/app/target,sharing=locked \
+    cargo build --release --bin simas-api \
+ && cp target/release/simas-api /usr/local/bin/simas-api
 
 FROM debian:bookworm-slim AS runtime
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ca-certificates curl \
  && rm -rf /var/lib/apt/lists/* \
  && useradd --system --uid 10001 --no-create-home app
-COPY --from=builder /app/target/release/simas-api /usr/local/bin/simas-api
+COPY --from=builder /usr/local/bin/simas-api /usr/local/bin/simas-api
 
 ENV BIND_ADDR=0.0.0.0:8080 \
     RUN_MIGRATIONS=true \
