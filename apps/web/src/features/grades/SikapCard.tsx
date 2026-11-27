@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Alert, Button, Card, ErrorAlert, Input, Select } from "../../components/ui";
+import { Alert, Button, Card, ErrorAlert, Input, Select } from "../../components/kit";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import type { Activity, AttitudeRow, ExtraRow, Predikat } from "./types";
 

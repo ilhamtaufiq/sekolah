@@ -1,5 +1,5 @@
 import { Link, useParams } from "react-router";
-import { Alert, Card, ErrorAlert } from "../../components/ui";
+import { Alert, Card, ErrorAlert } from "../../components/kit";
 import { useAuth } from "../../lib/auth";
 import { useApiQuery } from "../../lib/hooks";
 import { PdfViewer } from "./PdfViewer";

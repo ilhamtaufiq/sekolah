@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { usePagination } from "../../lib/pagination";
-import { Button, Card, ErrorAlert, Field, Input, Select, Table, PageHeader, Pagination } from "../../components/ui";
+import { Button, Card, ErrorAlert, Field, Input, Select, Table, PageHeader, Pagination } from "../../components/kit";
 import { useAuth } from "../../lib/auth";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import type { Student } from "./types";

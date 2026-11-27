@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router";
-import { Alert, Button, Card, ErrorAlert, Field, Input, Select, Table, PageHeader } from "../../components/ui";
+import { Alert, Button, Card, ErrorAlert, Field, Input, Select, Table, PageHeader } from "../../components/kit";
 import { useAuth } from "../../lib/auth";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import { useSchoolTerms } from "../school/useSchoolTerms";

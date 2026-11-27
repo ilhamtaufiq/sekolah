@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router";
 import { ApiError } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
-import { Alert, Button, Field, Input } from "../../components/ui";
+import { Alert, Button, Field, Input } from "../../components/kit";
 
 export function LoginPage() {
   const { user, login } = useAuth();

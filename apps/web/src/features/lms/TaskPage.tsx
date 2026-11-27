@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router";
-import { Alert, Button, Card, ErrorAlert, Field, Input, Table } from "../../components/ui";
+import { Alert, Button, Card, ErrorAlert, Field, Input, Table } from "../../components/kit";
 import { ApiError } from "../../lib/api";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import { downloadFile, formatBytes, formatDateTime, type FileItem } from "./files";

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router";
-import { Alert, Card, ErrorAlert } from "../../components/ui";
+import { Alert, Card, ErrorAlert } from "../../components/kit";
 import { useApiQuery } from "../../lib/hooks";
 
 type PreviewQuestion = {

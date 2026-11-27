@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Alert, Button, Card, Field, Input, ErrorAlert, Table, cn, PageHeader } from "../../components/ui";
+import { Alert, Button, Card, Field, Input, ErrorAlert, Table, cn, PageHeader } from "../../components/kit";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import { useAuth } from "../../lib/auth";
 import { formatDate, type AcademicYear } from "./types";

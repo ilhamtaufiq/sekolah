@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
-import { Alert, Button, ErrorAlert } from "../../components/ui";
+import { Alert, Button, ErrorAlert } from "../../components/kit";
 import { ApiError, api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { useApiQuery } from "../../lib/hooks";

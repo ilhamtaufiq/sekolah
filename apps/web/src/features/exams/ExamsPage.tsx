@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router";
-import { Alert, Button, Card, ErrorAlert, Field, Input, Select, Table, PageHeader } from "../../components/ui";
+import { Alert, Button, Card, ErrorAlert, Field, Input, Select, Table, PageHeader } from "../../components/kit";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import type { Assignment } from "../academic/types";
 import { type ExamRow, formatWhen, toIso } from "./types";

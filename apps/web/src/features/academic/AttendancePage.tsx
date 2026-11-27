@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Button, Card, ErrorAlert, Field, Input, Select, cn, PageHeader } from "../../components/ui";
+import { Alert, Button, Card, ErrorAlert, Field, Input, Select, cn, PageHeader } from "../../components/kit";
 import { useAuth } from "../../lib/auth";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import {

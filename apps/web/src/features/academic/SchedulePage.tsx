@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Button, Card, ErrorAlert, Field, Input, Select, Table, Alert } from "../../components/ui";
+import { Button, Card, ErrorAlert, Field, Input, Select, Table, Alert } from "../../components/kit";
 import { useAuth } from "../../lib/auth";
 import { toTime, useApiMutation, useApiQuery } from "../../lib/hooks";
 import {

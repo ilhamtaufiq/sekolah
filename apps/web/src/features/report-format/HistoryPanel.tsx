@@ -1,5 +1,5 @@
 import { ApiError } from "../../lib/api";
-import { Alert, Button, Card } from "../../components/ui";
+import { Alert, Button, Card } from "../../components/kit";
 import { useReportFormatHistory, useRestoreReportFormat } from "./api";
 
 export function HistoryPanel({ canRestore, currentVersion }: { canRestore: boolean; currentVersion: number }) {

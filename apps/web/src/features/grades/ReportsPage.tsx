@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { Alert, Button, Card, ErrorAlert, Field, Select, Table, PageHeader } from "../../components/ui";
+import { Alert, Button, Card, ErrorAlert, Field, Select, Table, PageHeader } from "../../components/kit";
 import { ApiError } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
