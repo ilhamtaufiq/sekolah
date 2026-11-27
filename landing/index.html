@@ -172,7 +172,8 @@
         <span>SCHID</span>
       </a>
       <nav class="nav-links" aria-label="Navigasi utama">
-        <a href="#modul">Modul</a>
+        <a href="#modul">Fitur</a>
+        <a href="#lembaga">Lembaga</a>
         <a href="#cara-kerja">Cara kerja</a>
         <a class="btn btn-primary" href="/app/login">Masuk</a>
       </nav>
@@ -184,10 +185,10 @@
       <div class="wrap">
         <p class="eyebrow">Manajemen sekolah</p>
         <h1>Satu aplikasi untuk sekolah, PKBM, PAUD, dan TK.</h1>
-        <p class="lead">Akademik, nilai, raport, pembelajaran daring, dan ujian. Guru, siswa, dan admin bekerja di tempat yang sama.</p>
+        <p class="lead">Akademik, absensi, jurnal, nilai, raport, pembelajaran daring, dan ujian. Admin, guru, siswa, dan orang tua bekerja di tempat yang sama.</p>
         <div class="actions" id="masuk">
           <a class="btn btn-primary" href="#cara-kerja">Lihat cara kerjanya</a>
-          <a class="btn btn-ghost" href="#modul">Lihat modul</a>
+          <a class="btn btn-ghost" href="#modul">Lihat fitur</a>
         </div>
         <div class="meta">
           <span>Multi-sekolah</span>
@@ -199,15 +200,32 @@
 
     <section id="modul">
       <div class="wrap">
-        <p class="eyebrow">Modul</p>
-        <h2>Dari data siswa sampai raport.</h2>
+        <p class="eyebrow">Fitur</p>
+        <h2>Semua yang dibutuhkan lembaga pendidikan, dalam satu aplikasi.</h2>
         <div class="modules">
-          <div class="module"><h3>Akademik</h3><p>Tahun ajaran, kelas, mapel, rombel, penugasan guru, dan jadwal dengan cek bentrok.</p></div>
+          <div class="module"><h3>Akademik</h3><p>Tahun ajaran, semester, kelas, rombel, mapel, penugasan guru, dan jadwal dengan cek bentrok.</p></div>
           <div class="module"><h3>Absensi</h3><p>Absensi harian oleh wali kelas dan per mapel oleh guru pengampu, dengan rekap otomatis.</p></div>
-          <div class="module"><h3>Nilai dan raport</h3><p>Komponen nilai dengan bobot, KKM, predikat, dan raport PDF yang bisa diunduh siswa.</p></div>
-          <div class="module"><h3>Ruang kelas</h3><p>Materi, tugas, dan pengumuman per kelas. Siswa mengumpulkan dan melihat umpan balik.</p></div>
+          <div class="module"><h3>Jurnal mengajar</h3><p>Guru mencatat jurnal per jam pelajaran. Kepala sekolah menyetujui, dan hanya jurnal yang disetujui masuk laporan.</p></div>
+          <div class="module"><h3>Nilai dan raport</h3><p>Komponen nilai berbobot, KKM atau KKTP, predikat, sikap, dan ekstrakurikuler. Raport PDF bisa diunduh siswa.</p></div>
+          <div class="module"><h3>Cetak massal</h3><p>Cetak raport satu kelas sekaligus dalam antrean. Hasilnya diunduh sebagai satu berkas ZIP.</p></div>
+          <div class="module"><h3>Kenaikan dan kelulusan</h3><p>Proses kenaikan kelas dengan riwayat. Siswa lulus mendapat sertifikat bernomor unik.</p></div>
+          <div class="module"><h3>Ruang kelas</h3><p>Materi, tugas, pengumuman, dan forum diskusi per materi. Tugas terlambat ditandai, tidak diblokir.</p></div>
           <div class="module"><h3>Pembelajaran</h3><p>Video YouTube dan PDF dalam satu urutan. Progres tercatat per halaman dan per video.</p></div>
-          <div class="module"><h3>Ujian</h3><p>Bank soal, paket dengan jendela waktu, token acak, waktu di server, dan analisis butir soal.</p></div>
+          <div class="module"><h3>Ujian</h3><p>Bank soal, jadwal ujian, token acak, waktu di server, pengawasan sesi, dan analisis butir soal.</p></div>
+          <div class="module"><h3>Portal siswa dan orang tua</h3><p>Siswa dan orang tua melihat nilai, absensi, tugas, dan raport dari akun masing-masing.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="lembaga" style="background: var(--surface); border-block: 1px solid var(--line);">
+      <div class="wrap">
+        <p class="eyebrow">Cakupan lembaga</p>
+        <h2>Satu sistem untuk setiap jenjang.</h2>
+        <p class="lead">Istilah dan pengaturan menyesuaikan jenis lembaga. Di PKBM, peserta disebut warga belajar dan kelas disebut rombel.</p>
+        <div class="modules">
+          <div class="module"><h3>TK dan PAUD</h3><p>Peserta didik, kelas, dan penilaian perkembangan sesuai aturan lembaga.</p></div>
+          <div class="module"><h3>SD, SMP, dan SMA</h3><p>Siswa, kelas, mapel, nilai semester, kenaikan kelas, dan kelulusan.</p></div>
+          <div class="module"><h3>PKBM</h3><p>Warga belajar, rombel, dan paket A, B, C. Jurnal mengajar dan sertifikat bernomor.</p></div>
         </div>
       </div>
     </section>
@@ -246,6 +264,7 @@
           <span class="role">Guru</span>
           <span class="role">Wali kelas</span>
           <span class="role">Siswa</span>
+          <span class="role">Orang tua</span>
         </div>
       </div>
     </section>
@@ -258,7 +277,7 @@
         </div>
         <div class="actions" style="margin-top:0">
           <a class="btn btn-primary" href="/app/login">Mulai sekarang</a>
-          <a class="btn btn-ghost" href="#modul">Lihat modul</a>
+          <a class="btn btn-ghost" href="#modul">Lihat fitur</a>
         </div>
       </div>
     </section>
