@@ -5,7 +5,7 @@ use axum::{
 };
 use tower_http::trace::TraceLayer;
 
-use crate::{academic, auth, exams, grades, health, lms, report_format, state::AppState};
+use crate::{academic, auth, exams, grades, health, kelulusan, lms, report_format, state::AppState};
 
 pub fn build(state: AppState) -> Router {
     Router::new()
@@ -254,6 +254,15 @@ pub fn build(state: AppState) -> Router {
         .route(
             "/api/school-profile",
             get(crate::school_profile::get).put(crate::school_profile::update),
+        )
+        // Kelulusan: kenaikan kelas dan sertifikat (F6)
+        .route("/api/promotions", get(kelulusan::kenaikan::roster))
+        .route("/api/promotions/process", post(kelulusan::kenaikan::process))
+        .route("/api/certificates", get(kelulusan::sertifikat::list))
+        .route("/api/me/certificates", get(kelulusan::sertifikat::mine))
+        .route(
+            "/api/certificates/{id}/pdf",
+            get(kelulusan::sertifikat::download),
         )
         .layer(TraceLayer::new_for_http())
         .with_state(state)

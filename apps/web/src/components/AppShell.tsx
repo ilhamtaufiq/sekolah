@@ -28,6 +28,8 @@ const nav = [
   // Jurnal mengajar
   { to: "/jurnal", label: "Jurnal mengajar", roles: TEACHING },
   { to: "/persetujuan-jurnal", label: "Persetujuan jurnal", roles: LEADERSHIP },
+  { to: "/kenaikan", label: "Kenaikan kelas", roles: ["admin"] },
+  { to: "/sertifikat-saya", label: "Sertifikat saya", roles: ["siswa"] },
 ];
 
 export function AppShell() {

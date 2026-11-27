@@ -8,6 +8,7 @@ mod exams;
 mod grades;
 mod health;
 mod jurnal;
+mod kelulusan;
 mod lms;
 mod report_format;
 mod router;

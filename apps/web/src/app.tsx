@@ -36,6 +36,8 @@ import { TakeExamPage } from "./features/exams/TakeExamPage";
 import { PreviewExamPage } from "./features/exams/PreviewExamPage";
 import { MyReportsPage } from "./features/grades/MyReportsPage";
 import { LessonPage } from "./features/lms/LessonPage";
+import { KenaikanPage } from "./features/kelulusan/KenaikanPage";
+import { SertifikatSayaPage } from "./features/kelulusan/SertifikatSayaPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -84,6 +86,8 @@ export function App() {
           <Route path="jurnal" element={<JurnalPage />} />
           <Route path="jurnal/:id" element={<JournalFormPage />} />
           <Route path="persetujuan-jurnal" element={<PersetujuanJurnalPage />} />
+          <Route path="kenaikan" element={<KenaikanPage />} />
+          <Route path="sertifikat-saya" element={<SertifikatSayaPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
