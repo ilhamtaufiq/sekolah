@@ -169,6 +169,12 @@ pub fn build(state: AppState) -> Router {
             get(lms::announcements::list).post(lms::announcements::create),
         )
         .route("/api/lms/files/{id}", get(lms::download))
+        // Forum per materi (lms_comments)
+        .route(
+            "/api/lms/materials/{id}/comments",
+            get(lms::comments::list).post(lms::comments::create),
+        )
+        .route("/api/lms/comments/{id}", delete(lms::comments::delete))
         // Ujian CBT (F5)
         .route(
             "/api/questions",

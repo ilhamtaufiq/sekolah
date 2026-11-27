@@ -180,8 +180,169 @@ function MaterialsTab({ roomId, manage, token }: { roomId: string; manage: boole
           {manage && m.files.length === 0 && (
             <p className="text-xs text-slate-500">Tanpa lampiran. Tambahkan lampiran lewat formulir di atas saat membuat materi.</p>
           )}
+          <MaterialForum materialId={m.id} />
         </Card>
       ))}
+    </div>
+  );
+}
+
+type ForumComment = {
+  id: string;
+  parent_id: string | null;
+  author_name: string;
+  author_role: string;
+  body: string;
+  created_at: string;
+  can_delete: boolean;
+};
+
+const ROLE_LABEL: Record<string, string> = {
+  admin: "Admin",
+  kepala_sekolah: "Kepala sekolah",
+  guru: "Guru",
+  wali_kelas: "Wali kelas",
+  siswa: "Siswa",
+  orang_tua: "Orang tua",
+};
+const FORUM_MAX = 2000;
+
+/** Forum diskusi satu materi: komentar utama dan balasan satu tingkat. */
+function MaterialForum({ materialId }: { materialId: string }) {
+  const comments = useApiQuery<ForumComment[]>(["lms-forum", materialId], `/lms/materials/${materialId}/comments`);
+  const [body, setBody] = useState("");
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [replyBody, setReplyBody] = useState("");
+  const inv = [["lms-forum", materialId]];
+  const post = useApiMutation<{ body: string; parent_id: string | null }, ForumComment>(
+    { method: "POST", path: () => `/lms/materials/${materialId}/comments`, body: (v) => v },
+    inv,
+  );
+  const remove = useApiMutation<string, unknown>({ method: "DELETE", path: (id) => `/lms/comments/${id}` }, inv);
+
+  const all = comments.data ?? [];
+  const roots = all.filter((c) => c.parent_id === null);
+  const repliesOf = (id: string) => all.filter((c) => c.parent_id === id);
+
+  const send = (e: FormEvent, parentId: string | null) => {
+    e.preventDefault();
+    const text = (parentId ? replyBody : body).trim();
+    if (!text) return;
+    post.mutate(
+      { body: text, parent_id: parentId },
+      {
+        onSuccess: () => {
+          if (parentId) {
+            setReplyBody("");
+            setReplyTo(null);
+          } else {
+            setBody("");
+          }
+        },
+      },
+    );
+  };
+
+  const onDelete = (id: string) => {
+    if (window.confirm("Hapus komentar ini? Balasannya ikut terhapus.")) remove.mutate(id);
+  };
+
+  return (
+    <section className="space-y-3 border-t border-slate-200 pt-4">
+      <h3 className="text-sm font-semibold text-slate-800">
+        Diskusi {all.length > 0 && <span className="font-normal text-slate-500">({all.length})</span>}
+      </h3>
+      <ErrorAlert error={post.error ?? remove.error ?? comments.error} />
+      {comments.data && roots.length === 0 && <p className="text-xs text-slate-500">Belum ada komentar.</p>}
+      <ul className="space-y-3">
+        {roots.map((c) => (
+          <li key={c.id} className="space-y-2">
+            <ForumCommentBody
+              comment={c}
+              onReply={() => {
+                setReplyTo(c.id);
+                setReplyBody("");
+              }}
+              onDelete={() => onDelete(c.id)}
+              busy={remove.isPending}
+            />
+            {repliesOf(c.id).length > 0 && (
+              <ul className="ml-6 space-y-2 border-l-2 border-slate-200 pl-4">
+                {repliesOf(c.id).map((r) => (
+                  <li key={r.id}>
+                    <ForumCommentBody comment={r} onDelete={() => onDelete(r.id)} busy={remove.isPending} />
+                  </li>
+                ))}
+              </ul>
+            )}
+            {replyTo === c.id && (
+              <form onSubmit={(e) => send(e, c.id)} className="ml-6 space-y-2">
+                <textarea
+                  value={replyBody}
+                  onChange={(e) => setReplyBody(e.target.value)}
+                  rows={2}
+                  maxLength={FORUM_MAX}
+                  aria-label={`Balasan untuk ${c.author_name}`}
+                  placeholder={`Balas ${c.author_name}…`}
+                  className="block w-full rounded-lg border-0 px-3 py-2 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-brand-500"
+                />
+                <div className="flex gap-2">
+                  <Button type="submit" disabled={post.isPending || replyBody.trim() === ""}>Kirim balasan</Button>
+                  <Button type="button" variant="ghost" onClick={() => setReplyTo(null)}>Batal</Button>
+                </div>
+              </form>
+            )}
+          </li>
+        ))}
+      </ul>
+      <form onSubmit={(e) => send(e, null)} className="space-y-2">
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          rows={2}
+          maxLength={FORUM_MAX}
+          aria-label="Komentar baru"
+          placeholder="Tulis komentar…"
+          className="block w-full rounded-lg border-0 px-3 py-2 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-brand-500"
+        />
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs text-slate-500">{body.length}/{FORUM_MAX}</span>
+          <Button type="submit" disabled={post.isPending || body.trim() === ""}>Kirim komentar</Button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+function ForumCommentBody({
+  comment: c,
+  onReply,
+  onDelete,
+  busy,
+}: {
+  comment: ForumComment;
+  onReply?: () => void;
+  onDelete: () => void;
+  busy: boolean;
+}) {
+  return (
+    <div className="rounded-lg bg-slate-50 p-3 ring-1 ring-slate-200">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
+        <span className="font-medium text-slate-800">{c.author_name}</span>
+        <span className="rounded bg-white px-1.5 py-0.5 ring-1 ring-slate-200">{ROLE_LABEL[c.author_role] ?? c.author_role}</span>
+        <span>{formatDateTime(c.created_at)}</span>
+      </div>
+      <p className="mt-1 whitespace-pre-line text-sm text-slate-700">{c.body}</p>
+      {(onReply || c.can_delete) && (
+        <div className="mt-2 flex gap-3 text-xs">
+          {onReply && (
+            <button type="button" className="text-brand-700 hover:underline" onClick={onReply}>Balas</button>
+          )}
+          {c.can_delete && (
+            <button type="button" className="text-red-700 hover:underline disabled:opacity-50" onClick={onDelete} disabled={busy}>Hapus</button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
