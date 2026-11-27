@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="SIMAS: sistem manajemen sekolah untuk akademik, nilai, raport, LMS, dan ujian dalam satu aplikasi." />
+  <meta name="claude:viewport-fit-sides" content="cover" />
+  <title>SIMAS Manajemen Sekolah</title>
+  <style>
+    :root {
+      /* Layout: satu kolom sempit, banyak ruang kosong, satu aksen. */
+      --bg: #ffffff;
+      --fg: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --surface: #f8fafc;
+      --accent: #2b6cd6;
+      --accent-ink: #ffffff;
+      color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #0b1120;
+        --fg: #e2e8f0;
+        --muted: #94a3b8;
+        --line: #1e293b;
+        --surface: #111a2e;
+        --accent: #5b8fe6;
+        --accent-ink: #0b1120;
+        color-scheme: dark;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #0b1120;
+      --fg: #e2e8f0;
+      --muted: #94a3b8;
+      --line: #1e293b;
+      --surface: #111a2e;
+      --accent: #5b8fe6;
+      --accent-ink: #0b1120;
+      color-scheme: dark;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    .wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding-left: max(20px, env(safe-area-inset-left, 0px));
+      padding-right: max(20px, env(safe-area-inset-right, 0px));
+    }
+    section { padding-block: 88px; }
+    .eyebrow {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin: 0 0 12px;
+    }
+    h1, h2, h3 { margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
+    h1 { font-size: clamp(36px, 6vw, 56px); line-height: 1.08; font-weight: 700; }
+    h2 { font-size: clamp(26px, 4vw, 34px); line-height: 1.2; font-weight: 700; }
+    h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+    p { margin: 0; }
+    .lead { font-size: 18px; color: var(--muted); max-width: 46ch; margin-top: 20px; }
+    .muted { color: var(--muted); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      text-decoration: none;
+      border: 1px solid transparent;
+    }
+    .btn-primary { background: var(--accent); color: var(--accent-ink); }
+    .btn-ghost { border-color: var(--line); color: var(--fg); }
+    .btn:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+    header.top {
+      position: sticky;
+      top: env(safe-area-inset-top, 0px);
+      z-index: 10;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; text-decoration: none; }
+    .mark {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: var(--accent); color: var(--accent-ink);
+      display: grid; place-items: center; font-size: 14px; font-weight: 700;
+    }
+    .nav-links { display: flex; gap: 24px; align-items: center; font-size: 15px; }
+    .nav-links a { text-decoration: none; color: var(--muted); }
+    .nav-links a:hover { color: var(--fg); }
+
+    .hero { padding-top: 120px; padding-bottom: 96px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 36px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 48px; font-size: 14px; color: var(--muted); }
+
+    .modules {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 0;
+      border-top: 1px solid var(--line);
+      margin-top: 48px;
+    }
+    .module { padding: 28px 24px 28px 0; border-bottom: 1px solid var(--line); }
+    .module p { margin-top: 8px; color: var(--muted); font-size: 15px; }
+
+    .steps { display: grid; gap: 40px; margin-top: 48px; }
+    .step { display: grid; grid-template-columns: 48px 1fr; gap: 20px; align-items: start; }
+    .step-num {
+      font-variant-numeric: tabular-nums;
+      font-size: 14px; font-weight: 600;
+      width: 40px; height: 40px; border-radius: 999px;
+      border: 1px solid var(--line); display: grid; place-items: center;
+      color: var(--accent);
+    }
+    .step p { margin-top: 6px; color: var(--muted); }
+
+    .roles { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+    .role {
+      padding: 8px 14px; border-radius: 999px;
+      border: 1px solid var(--line); background: var(--surface);
+      font-size: 14px;
+    }
+
+    .cta { background: var(--surface); border-block: 1px solid var(--line); text-align: left; }
+    .cta-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 24px; }
+    .cta .lead { margin-top: 12px; }
+
+    footer { padding-block: 32px; font-size: 14px; color: var(--muted); }
+    footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+
+    @media (max-width: 640px) {
+      section { padding-block: 64px; }
+      .hero { padding-top: 72px; padding-bottom: 64px; }
+      .nav-links a:not(.btn) { display: none; }
+      .step { grid-template-columns: 40px 1fr; gap: 16px; }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .hero .eyebrow, .hero h1, .hero .lead, .hero .actions { animation: rise 0.6s ease both; }
+      .hero h1 { animation-delay: 0.05s; }
+      .hero .lead { animation-delay: 0.12s; }
+      .hero .actions { animation-delay: 0.18s; }
+      @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap nav">
+      <a class="brand" href="#">
+        <span class="mark">S</span>
+        <span>SIMAS</span>
+      </a>
+      <nav class="nav-links" aria-label="Navigasi utama">
+        <a href="#modul">Modul</a>
+        <a href="#cara-kerja">Cara kerja</a>
+        <a class="btn btn-primary" href="#masuk">Masuk</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap">
+        <p class="eyebrow">Manajemen sekolah</p>
+        <h1>Satu aplikasi untuk seluruh sekolah.</h1>
+        <p class="lead">Akademik, nilai, raport, pembelajaran daring, dan ujian. Guru, siswa, dan admin bekerja di tempat yang sama.</p>
+        <div class="actions" id="masuk">
+          <a class="btn btn-primary" href="#cara-kerja">Lihat cara kerjanya</a>
+          <a class="btn btn-ghost" href="#modul">Lihat modul</a>
+        </div>
+        <div class="meta">
+          <span>Multi-sekolah</span>
+          <span>Bahasa Indonesia</span>
+          <span>Berjalan di browser</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="modul">
+      <div class="wrap">
+        <p class="eyebrow">Modul</p>
+        <h2>Dari data siswa sampai raport.</h2>
+        <div class="modules">
+          <div class="module"><h3>Akademik</h3><p>Tahun ajaran, kelas, mapel, rombel, penugasan guru, dan jadwal dengan cek bentrok.</p></div>
+          <div class="module"><h3>Absensi</h3><p>Absensi harian oleh wali kelas dan per mapel oleh guru pengampu, dengan rekap otomatis.</p></div>
+          <div class="module"><h3>Nilai dan raport</h3><p>Komponen nilai dengan bobot, KKM, predikat, dan raport PDF yang bisa diunduh siswa.</p></div>
+          <div class="module"><h3>Ruang kelas</h3><p>Materi, tugas, dan pengumuman per kelas. Siswa mengumpulkan dan melihat umpan balik.</p></div>
+          <div class="module"><h3>Pembelajaran</h3><p>Video YouTube dan PDF dalam satu urutan. Progres tercatat per halaman dan per video.</p></div>
+          <div class="module"><h3>Ujian</h3><p>Bank soal, paket dengan jendela waktu, token acak, waktu di server, dan analisis butir soal.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="cara-kerja" style="background: var(--surface); border-block: 1px solid var(--line);">
+      <div class="wrap">
+        <p class="eyebrow">Cara kerja</p>
+        <h2>Tiga langkah untuk mulai.</h2>
+        <div class="steps">
+          <div class="step">
+            <span class="step-num">1</span>
+            <div>
+              <h3>Admin menyiapkan sekolah</h3>
+              <p>Tahun ajaran, kelas, mapel, dan akun guru. Format raport diatur sesuai aturan sekolah.</p>
+            </div>
+          </div>
+          <div class="step">
+            <span class="step-num">2</span>
+            <div>
+              <h3>Guru mengajar dan mencatat</h3>
+              <p>Jadwal, absensi, materi, tugas, dan nilai dicatat sekali di tempat yang sama.</p>
+            </div>
+          </div>
+          <div class="step">
+            <span class="step-num">3</span>
+            <div>
+              <h3>Siswa dan orang tua melihat hasilnya</h3>
+              <p>Siswa mengerjakan pembelajaran dan ujian, lalu mengunduh raportnya sendiri.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="roles" aria-label="Peran pengguna">
+          <span class="role">Admin</span>
+          <span class="role">Kepala sekolah</span>
+          <span class="role">Guru</span>
+          <span class="role">Wali kelas</span>
+          <span class="role">Siswa</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div class="wrap cta-row">
+        <div>
+          <h2>Siap dipakai di sekolah Anda?</h2>
+          <p class="lead">Mulai dengan satu sekolah. Tambah modul sesuai kebutuhan.</p>
+        </div>
+        <div class="actions" style="margin-top:0">
+          <a class="btn btn-primary" href="#masuk">Mulai sekarang</a>
+          <a class="btn btn-ghost" href="#modul">Lihat modul</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© 2026 SIMAS</span>
+      <span>Rust · React · MySQL 8.4</span>
+    </div>
+  </footer>
+</body>
+</html>
