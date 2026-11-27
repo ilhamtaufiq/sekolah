@@ -1,5 +1,6 @@
 mod academic;
 mod auth;
+mod cetak;
 mod cli;
 mod config;
 mod db;
@@ -46,6 +47,9 @@ async fn main() -> Result<()> {
                 jwt_ttl_hours: cfg.jwt_ttl_hours,
                 upload_dir: cfg.upload_dir.clone(),
             };
+            if let Err(e) = cetak::worker::resume_pending(&state).await {
+                tracing::warn!(error = ?e, "gagal memuat antrean cetak massal");
+            }
             serve(&cfg.bind_addr, state).await
         }
         Some("create-school") => cli::create_school(&pool, &args[1..]).await,

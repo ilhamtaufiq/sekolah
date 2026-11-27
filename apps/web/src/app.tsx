@@ -14,6 +14,7 @@ import { SchedulePage } from "./features/academic/SchedulePage";
 import { AttendancePage } from "./features/academic/AttendancePage";
 import { GradesPage } from "./features/grades/GradesPage";
 import { ReportsPage } from "./features/grades/ReportsPage";
+import { CetakMassalPage } from "./features/grades/CetakMassalPage";
 import { RoomsPage, RoomPage } from "./features/lms/RoomsPage";
 import { TaskPage } from "./features/lms/TaskPage";
 
@@ -62,6 +63,7 @@ export function App() {
           <Route path="absensi" element={<AttendancePage />} />
           <Route path="nilai" element={<GradesPage />} />
           <Route path="raport" element={<ReportsPage />} />
+          <Route path="cetak-massal" element={<CetakMassalPage />} />
           <Route path="pengaturan/format-raport" element={<FormatSettingsPage />} />
           <Route path="ruang-kelas" element={<RoomsPage />} />
           <Route path="ruang-kelas/:id" element={<RoomPage />} />

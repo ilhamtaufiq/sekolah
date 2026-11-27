@@ -130,27 +130,25 @@ async fn class_info(
     })
 }
 
-/// Generate raport untuk seluruh siswa kelas pada satu semester.
-pub async fn generate(
-    State(st): State<AppState>,
-    user: AuthUser,
-    Json(input): Json<GenerateInput>,
-) -> AppResult<Json<Vec<ReportCardRow>>> {
-    require_role(&user, READ_ROLES)?;
-    let school = user.school_id;
-    ensure_homeroom_or_admin(&st.pool, &user, school, input.class_id).await?;
-
-    let info = class_info(&st.pool, school, input.class_id, input.semester_id).await?;
-    let (version, format) = active_format(&st.pool, school).await?;
+/// Data raport tiap siswa di satu kelas: (id siswa, NIS, data JSON untuk render), beserta versi format aktif.
+/// Dipakai oleh generate dan cetak massal supaya isi raport keduanya sama.
+pub(crate) async fn build_class_data(
+    pool: &MySqlPool,
+    school: Uuid,
+    class_id: Uuid,
+    semester_id: Uuid,
+) -> AppResult<(i32, Vec<(Uuid, String, serde_json::Value)>)> {
+    let info = class_info(pool, school, class_id, semester_id).await?;
+    let (version, format) = active_format(pool, school).await?;
 
     let students: Vec<(Uuid, String, String)> = sqlx::query_as(
         "SELECT s.id, s.nis, s.name FROM class_enrollments en JOIN students s ON s.id = en.student_id \
          WHERE en.class_id = ? AND en.academic_year_id = ? AND en.school_id = ? ORDER BY s.name",
     )
-    .bind(input.class_id)
+    .bind(class_id)
     .bind(info.academic_year_id)
     .bind(school)
-    .fetch_all(&st.pool)
+    .fetch_all(pool)
     .await?;
     if students.is_empty() {
         return Err(AppError::Validation(vec![FieldIssue::new(
@@ -164,13 +162,13 @@ pub async fn generate(
         "SELECT a.id, s.name FROM teaching_assignments a JOIN subjects s ON s.id = a.subject_id \
          WHERE a.class_id = ? AND a.school_id = ? ORDER BY s.name",
     )
-    .bind(input.class_id)
+    .bind(class_id)
     .bind(school)
-    .fetch_all(&st.pool)
+    .fetch_all(pool)
     .await?;
     let mut grades_by_student: HashMap<Uuid, Vec<GradeRow>> = HashMap::new();
     for (assignment_id, subject) in &assignments {
-        for row in finals::compute(&st.pool, school, *assignment_id, input.semester_id).await? {
+        for row in finals::compute(pool, school, *assignment_id, semester_id).await? {
             grades_by_student.entry(row.student_id).or_default().push((
                 subject.clone(),
                 row.score,
@@ -180,16 +178,15 @@ pub async fn generate(
         }
     }
 
-    let absences =
-        notes::term_absences(&st.pool, school, input.class_id, info.starts, info.ends).await?;
+    let absences = notes::term_absences(pool, school, class_id, info.starts, info.ends).await?;
     let term_notes: HashMap<Uuid, TermNoteParts> =
         sqlx::query_as::<_, (Uuid, Option<String>, Option<String>, Option<String>)>(
             "SELECT student_id, attitude, extracurricular, homeroom_note FROM student_term_notes \
          WHERE semester_id = ? AND class_id = ?",
         )
-        .bind(input.semester_id)
-        .bind(input.class_id)
-        .fetch_all(&st.pool)
+        .bind(semester_id)
+        .bind(class_id)
+        .fetch_all(pool)
         .await?
         .into_iter()
         .map(|(sid, a, e, h)| (sid, (a, e, h)))
@@ -210,7 +207,7 @@ pub async fn generate(
 
     let today = chrono::Local::now().date_naive();
     let date_text = indonesian_date(today);
-    let (rendered_jobs, paths): (Vec<RenderJob>, Vec<PathEntry>) = students
+    let jobs = students
         .iter()
         .map(|(sid, nis, name)| {
             let (notes_a, notes_e, notes_h) =
@@ -236,10 +233,32 @@ pub async fn generate(
                 abs,
                 rank,
             );
-            let rel = format!("{school}/{}/{sid}.pdf", input.semester_id);
-            ((*sid, data), (*sid, rel))
+            (*sid, nis.clone(), data)
         })
-        .unzip();
+        .collect();
+    Ok((version, jobs))
+}
+
+/// Generate raport untuk seluruh siswa kelas pada satu semester.
+pub async fn generate(
+    State(st): State<AppState>,
+    user: AuthUser,
+    Json(input): Json<GenerateInput>,
+) -> AppResult<Json<Vec<ReportCardRow>>> {
+    require_role(&user, READ_ROLES)?;
+    let school = user.school_id;
+    ensure_homeroom_or_admin(&st.pool, &user, school, input.class_id).await?;
+
+    let (version, students) =
+        build_class_data(&st.pool, school, input.class_id, input.semester_id).await?;
+    let paths: Vec<PathEntry> = students
+        .iter()
+        .map(|(sid, _, _)| (*sid, format!("{school}/{}/{sid}.pdf", input.semester_id)))
+        .collect();
+    let rendered_jobs: Vec<RenderJob> = students
+        .into_iter()
+        .map(|(sid, _, data)| (sid, data))
+        .collect();
 
     // Render CPU-bound dikerjakan di thread blocking agar runtime async tidak tertahan.
     let rendered: Vec<(Uuid, Result<Vec<u8>, String>)> = tokio::task::spawn_blocking(move || {

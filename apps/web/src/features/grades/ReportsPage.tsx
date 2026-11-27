@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { Alert, Button, Card, ErrorAlert, Field, Select, Table } from "../../components/ui";
 import { ApiError } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
@@ -64,10 +65,21 @@ export function ReportsPage() {
     [["report-cards", effClass, effSemester]],
   );
 
+  const bulk = useApiMutation<void, { id: string }>(
+    { method: "POST", path: () => "/cetak-massal/jobs", body: () => ({ class_id: effClass, semester_id: effSemester }) },
+    [["cetak-massal-jobs"]],
+  );
+
   const onSave = async () => {
     setNotice(null);
     await saveNotes.mutateAsync();
     setNotice("Catatan tersimpan.");
+  };
+
+  const onBulk = async () => {
+    setNotice(null);
+    await bulk.mutateAsync();
+    setNotice("Cetak massal masuk antrean.");
   };
 
   const onGenerate = async () => {
@@ -112,7 +124,7 @@ export function ReportsPage() {
       </div>
 
       {notice && <Alert tone="success">{notice}</Alert>}
-      <ErrorAlert error={saveNotes.error ?? generate.error} />
+      <ErrorAlert error={saveNotes.error ?? generate.error ?? bulk.error} />
       {downloadError && <Alert tone="error">{downloadError}</Alert>}
 
       <Card
@@ -149,6 +161,16 @@ export function ReportsPage() {
             </div>
           );
         })}
+      </Card>
+
+      <Card
+        title="Cetak massal"
+        description="Gabungkan raport seluruh siswa kelas ini menjadi satu ZIP. Diproses di latar belakang."
+        actions={canEdit && <Button variant="secondary" onClick={onBulk} disabled={bulk.isPending || !notes.data?.length}>{bulk.isPending ? "Memasukkan…" : "Cetak massal"}</Button>}
+      >
+        <p className="text-sm text-slate-600">
+          Progres dan unduhan ada di halaman <Link className="font-medium text-brand-700 underline" to="/cetak-massal">Cetak massal</Link>.
+        </p>
       </Card>
 
       <Card

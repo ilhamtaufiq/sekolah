@@ -227,6 +227,19 @@ pub fn build(state: AppState) -> Router {
             "/api/student/attempts/{id}/submit",
             post(exams::attempts::submit),
         )
+        // Cetak massal rapor
+        .route(
+            "/api/cetak-massal/jobs",
+            get(crate::cetak::jobs::list).post(crate::cetak::jobs::create),
+        )
+        .route(
+            "/api/cetak-massal/jobs/{id}",
+            get(crate::cetak::jobs::status),
+        )
+        .route(
+            "/api/cetak-massal/jobs/{id}/unduh",
+            get(crate::cetak::jobs::download),
+        )
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }
