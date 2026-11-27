@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Button, Card, ErrorAlert, Field, Input, Select, Table, cn } from "../../components/ui";
+import { Button, Card, ErrorAlert, Field, Input, Select, Table, cn, PageHeader } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import { ROLE_LABELS, type StaffUser } from "./types";
@@ -49,11 +49,7 @@ export function StaffPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-sm text-slate-500">Kepegawaian</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Guru dan staf</h1>
-        <p className="text-sm text-slate-600">Akun untuk login ke sistem. Peran menentukan apa yang bisa dilakukan.</p>
-      </header>
+      <PageHeader eyebrow="Kepegawaian" title="Guru dan staf" description="Akun untuk login ke sistem. Peran menentukan apa yang bisa dilakukan." />
 
       <ErrorAlert error={save.error} />
 

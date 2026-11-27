@@ -1,6 +1,6 @@
 import { useMemo, useState, type ClipboardEvent, type FormEvent } from "react";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
-import { Alert, Button, Card, ErrorAlert, Field, Input, Select, Table, cn } from "../../components/ui";
+import { Alert, Button, Card, ErrorAlert, Field, Input, Select, Table, cn, PageHeader } from "../../components/ui";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
@@ -146,13 +146,7 @@ export function GradesPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-sm text-slate-500">Akademik</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Input nilai</h1>
-        <p className="text-sm text-slate-600">
-          Nilai per komponen. Tempel dari Excel di sel mana pun: baris sesuai urutan siswa, kolom sesuai urutan komponen.
-        </p>
-      </header>
+      <PageHeader eyebrow="Akademik" title="Input nilai" description="Nilai per komponen. Tempel dari Excel di sel mana pun: baris sesuai urutan siswa, kolom sesuai urutan komponen." />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Field label="Kelas">

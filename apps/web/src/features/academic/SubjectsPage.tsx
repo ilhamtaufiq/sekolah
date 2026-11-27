@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Button, Card, ErrorAlert, Field, Input, Table } from "../../components/ui";
+import { Button, Card, ErrorAlert, Field, Input, Table, PageHeader } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import type { Subject } from "./types";
@@ -42,10 +42,7 @@ export function SubjectsPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-sm text-slate-500">Akademik</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Mata pelajaran</h1>
-      </header>
+      <PageHeader eyebrow="Akademik" title="Mata pelajaran" />
 
       <ErrorAlert error={save.error} />
 

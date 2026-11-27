@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Button, Card, ErrorAlert, Field, Input, Select, Table } from "../../components/ui";
+import { Button, Card, ErrorAlert, Field, Input, Select, Table, PageHeader } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import type { Student } from "./types";
@@ -74,10 +74,7 @@ export function StudentsPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-sm text-slate-500">Kesiswaan</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Siswa</h1>
-      </header>
+      <PageHeader eyebrow="Kesiswaan" title="Siswa" />
 
       <ErrorAlert error={save.error} />
 

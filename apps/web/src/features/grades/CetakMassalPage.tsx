@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Alert, Button, Card, Table } from "../../components/ui";
+import { Alert, Button, Card, Table, PageHeader } from "../../components/ui";
 import { ApiError, api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { downloadPdf } from "./api";
@@ -62,13 +62,7 @@ export function CetakMassalPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-sm text-slate-500">Raport</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Cetak massal</h1>
-        <p className="text-sm text-slate-600">
-          Antrean cetak rapor satu kelas. Admin melihat semua job sekolah, wali kelas hanya job miliknya.
-        </p>
-      </header>
+      <PageHeader eyebrow="Raport" title="Cetak massal" description="Antrean cetak rapor satu kelas. Admin melihat semua job sekolah, wali kelas hanya job miliknya." />
 
       {downloadError && <Alert tone="error">{downloadError}</Alert>}
       {jobs.error && <Alert tone="error">{jobs.error instanceof ApiError ? jobs.error.message : "Daftar job gagal dimuat."}</Alert>}

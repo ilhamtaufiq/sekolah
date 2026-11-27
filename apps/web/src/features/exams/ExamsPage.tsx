@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router";
-import { Alert, Button, Card, ErrorAlert, Field, Input, Select, Table } from "../../components/ui";
+import { Alert, Button, Card, ErrorAlert, Field, Input, Select, Table, PageHeader } from "../../components/ui";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import type { Assignment } from "../academic/types";
 import { type ExamRow, formatWhen, toIso } from "./types";
@@ -50,11 +50,7 @@ export function ExamsPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-sm text-slate-500">Ujian</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Paket ujian</h1>
-        <p className="text-sm text-slate-600">Waktu dihitung server. Siswa hanya bisa mengerjakan paket yang sudah diterbitkan.</p>
-      </header>
+      <PageHeader eyebrow="Ujian" title="Paket ujian" description="Waktu dihitung server. Siswa hanya bisa mengerjakan paket yang sudah diterbitkan." />
 
       <ErrorAlert error={create.error} />
       {issued && (

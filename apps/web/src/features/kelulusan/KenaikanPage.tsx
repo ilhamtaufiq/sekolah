@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Alert, Button, Card, ErrorAlert, Field, Input, Select, Table } from "../../components/ui";
+import { Alert, Button, Card, ErrorAlert, Field, Input, Select, Table, PageHeader } from "../../components/ui";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import type { AcademicYear, ClassRow } from "../academic/types";
 
@@ -99,14 +99,7 @@ export function KenaikanPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-sm text-slate-500">Akademik</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Proses kenaikan kelas</h1>
-        <p className="text-sm text-slate-600">
-          Tentukan keputusan tiap siswa. Siswa yang lulus mendapat sertifikat dengan nomor unik. Semua keputusan
-          diproses sekaligus; bila ada yang salah, tidak ada yang tersimpan.
-        </p>
-      </header>
+      <PageHeader eyebrow="Akademik" title="Proses kenaikan kelas" description="Tentukan keputusan tiap siswa. Siswa yang lulus mendapat sertifikat dengan nomor unik. Semua keputusan diproses sekaligus; bila ada yang salah, tidak ada yang tersimpan." />
 
       <ErrorAlert error={years.error} />
       <ErrorAlert error={roster.error} />

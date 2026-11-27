@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Alert, Button, Card, ErrorAlert, Field, Select } from "../../components/ui";
+import { Alert, Button, Card, ErrorAlert, Field, Select, PageHeader } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { useApiMutation } from "../../lib/hooks";
 import { JENIS_LEMBAGA_OPTIONS, useSchoolTerms, type JenisLembaga, type SchoolProfile } from "./useSchoolTerms";
@@ -31,13 +31,7 @@ export function SchoolProfilePage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-sm text-slate-500">Pengaturan</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Profil sekolah</h1>
-        <p className="text-sm text-slate-600">
-          Jenis lembaga menentukan istilah di seluruh aplikasi. Saat ini: {label || "…"}, memakai istilah “{terms.student}” dan “{terms.class}”.
-        </p>
-      </header>
+      <PageHeader eyebrow="Pengaturan" title="Profil sekolah" description={<>Jenis lembaga menentukan istilah di seluruh aplikasi. Saat ini: {label || "…"}, memakai istilah “{terms.student}” dan “{terms.class}”.</>} />
 
       <ErrorAlert error={save.error} />
       {saved && <Alert tone="success">Jenis lembaga disimpan.</Alert>}

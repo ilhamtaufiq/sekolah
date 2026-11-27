@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Alert, Button, Card, Field, Input, ErrorAlert, Table, cn } from "../../components/ui";
+import { Alert, Button, Card, Field, Input, ErrorAlert, Table, cn, PageHeader } from "../../components/ui";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import { useAuth } from "../../lib/auth";
 import { formatDate, type AcademicYear } from "./types";
@@ -35,11 +35,7 @@ export function YearsPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-sm text-slate-500">Akademik</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Tahun ajaran</h1>
-        <p className="text-sm text-slate-600">Hanya satu tahun ajaran yang aktif. Kelas dan absensi mengikuti tahun aktif.</p>
-      </header>
+      <PageHeader eyebrow="Akademik" title="Tahun ajaran" description="Hanya satu tahun ajaran yang aktif. Kelas dan absensi mengikuti tahun aktif." />
 
       {notice && <Alert tone="success">{notice}</Alert>}
       <ErrorAlert error={create.error ?? activate.error} />

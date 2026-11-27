@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router";
-import { Alert, Button, Card, ErrorAlert, Field, Input, Select, Table } from "../../components/ui";
+import { Alert, Button, Card, ErrorAlert, Field, Input, Select, Table, PageHeader } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import { useSchoolTerms } from "../school/useSchoolTerms";
@@ -60,17 +60,13 @@ export function ClassesPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-sm text-slate-500">Akademik</p>
-        <h1 className="text-2xl font-semibold tracking-tight">{terms.class}</h1>
-        <p className="text-sm text-slate-600">Daftar {terms.class.toLowerCase()} di tahun ajaran yang aktif.</p>
-      </header>
+      <PageHeader eyebrow="Akademik" title={terms.class} description={<>Daftar {terms.class.toLowerCase()} di tahun ajaran yang aktif.</>} />
 
       <ErrorAlert error={save.error} />
 
       {canEdit && (
         <Card title={editing ? `Ubah kelas ${editing.name}` : "Tambah kelas"}>
-          <form onSubmit={onSubmit} className="grid items-end gap-4 md:grid-cols-[1fr_120px_140px_1fr_auto_auto]">
+          <form onSubmit={onSubmit} className="grid items-end gap-4 md:grid-cols-[1fr_96px_168px_1fr_auto_auto]">
             <Field label="Nama kelas">
               <Input value={name} onChange={(e) => setName(e.target.value)} required maxLength={40} placeholder="7A" />
             </Field>
@@ -83,7 +79,7 @@ export function ClassesPage() {
             </Field>
             <Field label="Program">
               <Select value={program} onChange={(e) => setProgram(e.target.value)}>
-                <option value="">— tidak ada —</option>
+                <option value="">Tanpa program</option>
                 {PROGRAM_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
@@ -91,7 +87,7 @@ export function ClassesPage() {
             </Field>
             <Field label="Wali kelas">
               <Select value={homeroom} onChange={(e) => setHomeroom(e.target.value)}>
-                <option value="">— belum ditentukan —</option>
+                <option value="">Belum ditentukan</option>
                 {teachers.map((t) => (
                   <option key={t.id} value={t.id}>{t.name} ({ROLE_LABELS[t.role] ?? t.role})</option>
                 ))}

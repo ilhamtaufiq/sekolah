@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { Alert, Button, Card, ErrorAlert, Field, Select, Table } from "../../components/ui";
+import { Alert, Button, Card, ErrorAlert, Field, Select, Table, PageHeader } from "../../components/ui";
 import { ApiError } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
@@ -104,13 +104,7 @@ export function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-sm text-slate-500">Raport</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Catatan dan raport</h1>
-        <p className="text-sm text-slate-600">
-          Isi sikap, ekstrakurikuler, dan catatan wali kelas. Ketidakhadiran diambil dari absensi harian.
-        </p>
-      </header>
+      <PageHeader eyebrow="Raport" title="Catatan dan raport" description="Isi sikap, ekstrakurikuler, dan catatan wali kelas. Ketidakhadiran diambil dari absensi harian." />
 
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="Kelas">

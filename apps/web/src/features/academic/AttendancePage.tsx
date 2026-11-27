@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Button, Card, ErrorAlert, Field, Input, Select, cn } from "../../components/ui";
+import { Alert, Button, Card, ErrorAlert, Field, Input, Select, cn, PageHeader } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import {
@@ -111,13 +111,7 @@ export function AttendancePage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-sm text-slate-500">Kehadiran</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Absensi</h1>
-        <p className="text-sm text-slate-600">
-          Wali kelas mencatat absensi harian. Guru pengampu mencatat absensi per mapel.
-        </p>
-      </header>
+      <PageHeader eyebrow="Kehadiran" title="Absensi" description="Wali kelas mencatat absensi harian. Guru pengampu mencatat absensi per mapel." />
 
       <Card title="Pilih sesi">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

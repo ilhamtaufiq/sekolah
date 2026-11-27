@@ -1,7 +1,66 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
+import { Link } from "react-router";
 
 export function cn(...parts: (string | false | null | undefined)[]) {
   return parts.filter(Boolean).join(" ");
+}
+
+/** Judul halaman yang seragam: label kecil, judul, deskripsi singkat, dan aksi di kanan. */
+export function PageHeader({
+  eyebrow,
+  title,
+  description,
+  back,
+  actions,
+}: {
+  eyebrow?: string;
+  title: string;
+  description?: ReactNode;
+  back?: { to: string; label: string };
+  actions?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4 border-b border-slate-200 pb-5">
+      <div className="min-w-0 space-y-1.5">
+        {back ? (
+          <Link to={back.to} className="text-sm text-slate-500 hover:text-slate-900">
+            ← {back.label}
+          </Link>
+        ) : (
+          eyebrow && <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{eyebrow}</p>
+        )}
+        <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">{title}</h1>
+        {description && <div className="max-w-2xl text-sm leading-relaxed text-slate-600">{description}</div>}
+      </div>
+      {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
+    </div>
+  );
+}
+
+/** Deretan angka ringkas dalam satu bingkai, dipisahkan garis tipis (bukan kartu di dalam kartu). */
+export function StatStrip({ items }: { items: { label: string; value: ReactNode; hint?: string }[] }) {
+  return (
+    <dl className="grid grid-cols-2 divide-x divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white sm:grid-cols-4 sm:divide-y-0">
+      {items.map((item) => (
+        <div key={item.label} className="min-w-0 px-4 py-4">
+          <dt className="text-xs font-medium text-slate-500">{item.label}</dt>
+          <dd className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-slate-900">{item.value}</dd>
+          {item.hint && <p className="mt-0.5 truncate text-xs text-slate-500">{item.hint}</p>}
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/** Keadaan kosong yang menjelaskan apa yang bisa dilakukan, bukan sekadar "Belum ada data". */
+export function EmptyState({ title, children, action }: { title: string; children?: ReactNode; action?: ReactNode }) {
+  return (
+    <div className="rounded-lg border border-dashed border-slate-300 px-6 py-8 text-center">
+      <p className="text-sm font-medium text-slate-900">{title}</p>
+      {children && <div className="mx-auto mt-1 max-w-md text-sm text-slate-500">{children}</div>}
+      {action && <div className="mt-4 flex justify-center">{action}</div>}
+    </div>
+  );
 }
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -69,13 +128,13 @@ export function Card({ title, description, children, actions }: {
   actions?: ReactNode;
 }) {
   return (
-    <section className="rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
-      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-5 py-4">
-        <div>
-          <h2 className="text-base font-semibold text-slate-900">{title}</h2>
+    <section className="rounded-lg border border-slate-200 bg-white">
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 px-5 py-3.5">
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
           {description && <p className="mt-0.5 text-sm text-slate-500">{description}</p>}
         </div>
-        {actions}
+        {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
       </header>
       <div className="space-y-5 px-5 py-5">{children}</div>
     </section>
@@ -128,16 +187,16 @@ export function Select({ className, children, ...props }: SelectHTMLAttributes<H
 
 export function Table({ head, children }: { head: ReactNode[]; children: ReactNode }) {
   return (
-    <div className="overflow-x-auto rounded-xl ring-1 ring-slate-200">
-      <table className="min-w-full divide-y divide-slate-200 bg-white text-sm">
-        <thead className="bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+    <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+      <table className="min-w-full text-sm">
+        <thead className="border-b border-slate-200 bg-slate-50/70 text-left text-xs font-medium text-slate-500">
           <tr>
             {head.map((h, i) => (
-              <th key={i} className="px-4 py-2.5">{h}</th>
+              <th key={i} className="whitespace-nowrap px-4 py-2.5 font-medium">{h}</th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">{children}</tbody>
+        <tbody className="divide-y divide-slate-100 [&>tr:hover]:bg-slate-50/60">{children}</tbody>
       </table>
     </div>
   );
