@@ -18,6 +18,7 @@ const nav = [
   { to: "/absensi", label: "Absensi", roles: STAFF },
   { to: "/nilai", label: "Input nilai", roles: TEACHING },
   { to: "/raport", label: "Raport", roles: STAFF },
+  { to: "/cetak-massal", label: "Cetak massal", roles: ["admin", "wali_kelas"] },
   { to: "/pengaturan/format-raport", label: "Format raport", roles: STAFF },
   { to: "/pengaturan/profil", label: "Profil sekolah", roles: ["admin"] },
   { to: "/ruang-kelas", label: "Ruang kelas", roles: [...STAFF, "siswa"] },

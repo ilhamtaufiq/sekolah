@@ -24,3 +24,4 @@ typst-kit = { version = "0.15.1", features = ["embedded-fonts"] }
 typst-layout = "0.15.1"
 typst-pdf = "0.15.1"
 uuid = { version = "1.29.3", features = ["v4", "serde"] }
+zip = { version = "9.8.2", features = ["deflate"] }
