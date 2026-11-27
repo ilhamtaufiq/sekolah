@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { usePagination } from "../../lib/pagination";
 import { Link } from "react-router";
-import { Alert, Card, ErrorAlert, Field, Input, Select, Table } from "../../components/ui";
+import { Alert, Card, ErrorAlert, Field, Input, Select, Table, Pagination } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { useApiQuery } from "../../lib/hooks";
 import { formatTanggal, JOURNAL_STATUS_LABEL, type Journal, type JournalRekap, type JournalStatus } from "./types";
@@ -20,6 +21,7 @@ export function JurnalPage() {
     ["jurnal", "list", status, from, to],
     `/jurnal?${new URLSearchParams({ ...(status && { status }), ...(from && { from }), ...(to && { to }) })}`,
   );
+  const pg = usePagination(journals.data ?? [], 25);
   const assignments = useApiQuery<Assignment[]>(
     ["assignments", "mine", user?.id ?? ""],
     user ? `/assignments?teacher_id=${user.id}` : null,
@@ -75,29 +77,32 @@ export function JurnalPage() {
         ) : journals.data?.length === 0 ? (
           <p className="text-sm text-slate-500">Belum ada jurnal untuk filter ini.</p>
         ) : (
-          <Table head={["Tanggal", "Jam ke", "Kelas · Mapel", "Materi", "Status", ""]}>
-            {journals.data?.map((j) => (
-              <tr key={j.id}>
-                <td className="whitespace-nowrap px-4 py-2.5">{formatTanggal(j.journal_date)}</td>
-                <td className="px-4 py-2.5">{j.hour_no}</td>
-                <td className="px-4 py-2.5">
-                  {j.class_name} · {j.subject_name}
-                </td>
-                <td className="max-w-xs truncate px-4 py-2.5">{j.topic}</td>
-                <td className="px-4 py-2.5">
-                  <StatusBadge status={j.status} />
-                  {j.status === "ditolak" && j.decision_note && (
-                    <p className="mt-1 text-xs text-red-700">Catatan: {j.decision_note}</p>
-                  )}
-                </td>
-                <td className="px-4 py-2.5 text-right">
-                  <Link to={`/jurnal/${j.id}`} className="font-medium text-brand-700 hover:underline">
-                    {j.status === "draft" || j.status === "ditolak" ? "Ubah" : "Lihat"}
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </Table>
+          <>
+            <Table head={["Tanggal", "Jam ke", "Kelas · Mapel", "Materi", "Status", ""]}>
+              {pg.items.map((j) => (
+                <tr key={j.id}>
+                  <td className="whitespace-nowrap px-4 py-2.5">{formatTanggal(j.journal_date)}</td>
+                  <td className="px-4 py-2.5">{j.hour_no}</td>
+                  <td className="px-4 py-2.5">
+                    {j.class_name} · {j.subject_name}
+                  </td>
+                  <td className="max-w-xs truncate px-4 py-2.5">{j.topic}</td>
+                  <td className="px-4 py-2.5">
+                    <StatusBadge status={j.status} />
+                    {j.status === "ditolak" && j.decision_note && (
+                      <p className="mt-1 text-xs text-red-700">Catatan: {j.decision_note}</p>
+                    )}
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <Link to={`/jurnal/${j.id}`} className="font-medium text-brand-700 hover:underline">
+                      {j.status === "draft" || j.status === "ditolak" ? "Ubah" : "Lihat"}
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </Table>
+            <Pagination {...pg} />
+          </>
         )}
       </Card>
 

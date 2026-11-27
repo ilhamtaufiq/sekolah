@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Alert, Button, Card, ErrorAlert, Field, Input, Select, Table, cn } from "../../components/ui";
+import { usePagination } from "../../lib/pagination";
+import { Alert, Button, Card, ErrorAlert, Field, Input, Select, Table, cn, Pagination } from "../../components/ui";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import {
   formatTanggal,
@@ -25,6 +26,7 @@ export function PersetujuanJurnalPage() {
     ["jurnal", "review", status, from, to],
     `/jurnal?${new URLSearchParams({ status, ...(from && { from }), ...(to && { to }) })}`,
   );
+  const pg = usePagination(journals.data ?? [], 25);
   const selected = journals.data?.find((j) => j.id === selectedId) ?? null;
 
   const approve = useApiMutation<{ id: string; note: string }, Journal>(
@@ -100,29 +102,32 @@ export function PersetujuanJurnalPage() {
         ) : journals.data?.length === 0 ? (
           <p className="text-sm text-slate-500">Tidak ada jurnal dengan status ini.</p>
         ) : (
-          <Table head={["Tanggal", "Jam", "Guru", "Kelas · Mapel", "Materi", "Status", ""]}>
-            {journals.data?.map((j) => (
-              <tr key={j.id} className={cn(j.id === selectedId && "bg-brand-50")}>
-                <td className="whitespace-nowrap px-4 py-2.5">{formatTanggal(j.journal_date)}</td>
-                <td className="px-4 py-2.5">{j.hour_no}</td>
-                <td className="px-4 py-2.5">{j.teacher_name}</td>
-                <td className="px-4 py-2.5">
-                  {j.class_name} · {j.subject_name}
-                </td>
-                <td className="max-w-xs truncate px-4 py-2.5">{j.topic}</td>
-                <td className="px-4 py-2.5">
-                  <StatusBadge status={j.status} />
-                </td>
-                <td className="px-4 py-2.5 text-right">
-                  {j.status === "menunggu" && (
-                    <Button variant="secondary" onClick={() => pick(j)}>
-                      Tinjau
-                    </Button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </Table>
+          <>
+            <Table head={["Tanggal", "Jam", "Guru", "Kelas · Mapel", "Materi", "Status", ""]}>
+              {pg.items.map((j) => (
+                <tr key={j.id} className={cn(j.id === selectedId && "bg-brand-50")}>
+                  <td className="whitespace-nowrap px-4 py-2.5">{formatTanggal(j.journal_date)}</td>
+                  <td className="px-4 py-2.5">{j.hour_no}</td>
+                  <td className="px-4 py-2.5">{j.teacher_name}</td>
+                  <td className="px-4 py-2.5">
+                    {j.class_name} · {j.subject_name}
+                  </td>
+                  <td className="max-w-xs truncate px-4 py-2.5">{j.topic}</td>
+                  <td className="px-4 py-2.5">
+                    <StatusBadge status={j.status} />
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    {j.status === "menunggu" && (
+                      <Button variant="secondary" onClick={() => pick(j)}>
+                        Tinjau
+                      </Button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </Table>
+            <Pagination {...pg} />
+          </>
         )}
       </Card>
 

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
-import { Button, Card, ErrorAlert, Field, Input, Select, Table, PageHeader } from "../../components/ui";
+import { usePagination } from "../../lib/pagination";
+import { Button, Card, ErrorAlert, Field, Input, Select, Table, PageHeader, Pagination } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import type { Student } from "./types";
@@ -28,6 +29,7 @@ export function StudentsPage() {
   const qs = params.toString();
 
   const students = useApiQuery<Student[]>(["students", qs], `/students${qs ? `?${qs}` : ""}`);
+  const pg = usePagination(students.data ?? [], 25);
 
   const [editing, setEditing] = useState<Student | null>(null);
   const [form, setForm] = useState<Form>(EMPTY);
@@ -127,24 +129,27 @@ export function StudentsPage() {
 
       {students.isPending && <p className="text-sm text-slate-500">Memuat…</p>}
       {students.data && (
-        <Table head={["NIS", "Nama", "L/P", "Status", ""]}>
-          {students.data.length === 0 && (
-            <tr>
-              <td colSpan={5} className="px-4 py-6 text-center text-slate-500">Tidak ada siswa yang cocok.</td>
-            </tr>
-          )}
-          {students.data.map((s) => (
-            <tr key={s.id}>
-              <td className="px-4 py-3 font-mono text-xs">{s.nis}</td>
-              <td className="px-4 py-3 font-medium">{s.name}</td>
-              <td className="px-4 py-3">{s.gender ?? "—"}</td>
-              <td className="px-4 py-3">{s.status}</td>
-              <td className="px-4 py-3 text-right">
-                {canEdit && <Button variant="ghost" onClick={() => startEdit(s)}>Ubah</Button>}
-              </td>
-            </tr>
-          ))}
-        </Table>
+        <>
+          <Table head={["NIS", "Nama", "L/P", "Status", ""]}>
+            {students.data.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-4 py-6 text-center text-slate-500">Tidak ada siswa yang cocok.</td>
+              </tr>
+            )}
+            {pg.items.map((s) => (
+              <tr key={s.id}>
+                <td className="px-4 py-3 font-mono text-xs">{s.nis}</td>
+                <td className="px-4 py-3 font-medium">{s.name}</td>
+                <td className="px-4 py-3">{s.gender ?? "—"}</td>
+                <td className="px-4 py-3">{s.status}</td>
+                <td className="px-4 py-3 text-right">
+                  {canEdit && <Button variant="ghost" onClick={() => startEdit(s)}>Ubah</Button>}
+                </td>
+              </tr>
+            ))}
+          </Table>
+          <Pagination {...pg} />
+        </>
       )}
     </div>
   );

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Alert, Button, Card, ErrorAlert, Field, Input, Select, Table, PageHeader } from "../../components/ui";
+import { usePagination } from "../../lib/pagination";
+import { Alert, Button, Card, ErrorAlert, Field, Input, Select, Table, PageHeader, Pagination } from "../../components/ui";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import type { AcademicYear, ClassRow } from "../academic/types";
 
@@ -52,6 +53,7 @@ export function KenaikanPage() {
     ["promotions", sourceId],
     sourceId ? `/promotions?academic_year_id=${sourceId}` : null,
   );
+  const pg = usePagination(roster.data ?? [], 25);
   const targetClasses = useApiQuery<ClassRow[]>(
     ["classes", targetId],
     targetId ? `/classes?academic_year_id=${targetId}` : null,
@@ -161,62 +163,65 @@ export function KenaikanPage() {
           <Alert tone="info">Belum ada siswa yang terdaftar di kelas pada tahun ajaran ini.</Alert>
         )}
         {roster.data && roster.data.length > 0 && (
-          <Table head={["Siswa", "Kelas asal", "Keputusan", "Kelas tujuan", "Keterangan"]}>
-            {roster.data.map((r) => {
-              const isPending = !r.decision && r.status === "aktif";
-              const draft = drafts[r.student_id] ?? { decision: "", toClass: "" };
-              return (
-                <tr key={r.student_id}>
-                  <td className="px-4 py-3">
-                    <p className="font-medium">{r.name}</p>
-                    <p className="text-xs text-slate-500">NIS {r.nis}</p>
-                  </td>
-                  <td className="px-4 py-3">{r.class_name}</td>
-                  <td className="px-4 py-3">
-                    {isPending ? (
-                      <Select
-                        aria-label={`Keputusan ${r.name}`}
-                        value={draft.decision}
-                        onChange={(e) => setDraft(r.student_id, { decision: e.target.value as Draft["decision"] })}
-                      >
-                        <option value="">Belum dipilih</option>
-                        <option value="naik">Naik kelas</option>
-                        <option value="tinggal">Tinggal di kelas</option>
-                        <option value="lulus">Lulus</option>
-                      </Select>
-                    ) : (
-                      <span className="font-medium">{r.decision ? DECISION_LABEL[r.decision] : "-"}</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    {isPending && draft.decision && draft.decision !== "lulus" ? (
-                      <Select
-                        aria-label={`Kelas tujuan ${r.name}`}
-                        value={draft.toClass}
-                        onChange={(e) => setDraft(r.student_id, { toClass: e.target.value })}
-                      >
-                        <option value="">Pilih kelas</option>
-                        {(targetClasses.data ?? []).map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.name} (tingkat {c.grade_level})
-                          </option>
-                        ))}
-                      </Select>
-                    ) : (
-                      <span className="text-slate-600">-</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-xs text-slate-500">
-                    {r.status !== "aktif"
-                      ? `Status ${r.status}`
-                      : r.processed_at
-                        ? `Diproses ${new Date(r.processed_at).toLocaleDateString("id-ID")}`
-                        : ""}
-                  </td>
-                </tr>
-              );
-            })}
-          </Table>
+          <>
+            <Table head={["Siswa", "Kelas asal", "Keputusan", "Kelas tujuan", "Keterangan"]}>
+              {pg.items.map((r) => {
+                const isPending = !r.decision && r.status === "aktif";
+                const draft = drafts[r.student_id] ?? { decision: "", toClass: "" };
+                return (
+                  <tr key={r.student_id}>
+                    <td className="px-4 py-3">
+                      <p className="font-medium">{r.name}</p>
+                      <p className="text-xs text-slate-500">NIS {r.nis}</p>
+                    </td>
+                    <td className="px-4 py-3">{r.class_name}</td>
+                    <td className="px-4 py-3">
+                      {isPending ? (
+                        <Select
+                          aria-label={`Keputusan ${r.name}`}
+                          value={draft.decision}
+                          onChange={(e) => setDraft(r.student_id, { decision: e.target.value as Draft["decision"] })}
+                        >
+                          <option value="">Belum dipilih</option>
+                          <option value="naik">Naik kelas</option>
+                          <option value="tinggal">Tinggal di kelas</option>
+                          <option value="lulus">Lulus</option>
+                        </Select>
+                      ) : (
+                        <span className="font-medium">{r.decision ? DECISION_LABEL[r.decision] : "-"}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {isPending && draft.decision && draft.decision !== "lulus" ? (
+                        <Select
+                          aria-label={`Kelas tujuan ${r.name}`}
+                          value={draft.toClass}
+                          onChange={(e) => setDraft(r.student_id, { toClass: e.target.value })}
+                        >
+                          <option value="">Pilih kelas</option>
+                          {(targetClasses.data ?? []).map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name} (tingkat {c.grade_level})
+                            </option>
+                          ))}
+                        </Select>
+                      ) : (
+                        <span className="text-slate-600">-</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-500">
+                      {r.status !== "aktif"
+                        ? `Status ${r.status}`
+                        : r.processed_at
+                          ? `Diproses ${new Date(r.processed_at).toLocaleDateString("id-ID")}`
+                          : ""}
+                    </td>
+                  </tr>
+                );
+              })}
+            </Table>
+            <Pagination {...pg} />
+          </>
         )}
       </Card>
     </div>

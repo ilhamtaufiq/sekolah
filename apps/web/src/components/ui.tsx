@@ -206,3 +206,42 @@ export function Table({ head, children }: { head: ReactNode[]; children: ReactNo
     </div>
   );
 }
+
+/** Kontrol halaman di bawah tabel. Menerima hasil dari usePagination. */
+export function Pagination({
+  page,
+  pageCount,
+  total,
+  from,
+  to,
+  setPage,
+}: {
+  page: number;
+  pageCount: number;
+  total: number;
+  from: number;
+  to: number;
+  setPage: (p: number) => void;
+}) {
+  if (total === 0) return null;
+  return (
+    <nav aria-label="Paginasi" className="flex flex-wrap items-center justify-between gap-3 pt-3 text-sm">
+      <p className="text-muted-foreground tabular-nums">
+        Menampilkan {from}–{to} dari {total}
+      </p>
+      {pageCount > 1 && (
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={() => setPage(page - 1)} disabled={page <= 1}>
+            Sebelumnya
+          </Button>
+          <span className="min-w-[7.5rem] text-center tabular-nums text-foreground" aria-live="polite">
+            Halaman {page} dari {pageCount}
+          </span>
+          <Button variant="secondary" size="sm" onClick={() => setPage(page + 1)} disabled={page >= pageCount}>
+            Berikutnya
+          </Button>
+        </div>
+      )}
+    </nav>
+  );
+}
