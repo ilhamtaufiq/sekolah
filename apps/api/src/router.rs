@@ -250,6 +250,11 @@ pub fn build(state: AppState) -> Router {
         .route("/api/jurnal/{id}/submit", post(crate::jurnal::crud::submit))
         .route("/api/jurnal/{id}/approve", post(crate::jurnal::review::approve))
         .route("/api/jurnal/{id}/reject", post(crate::jurnal::review::reject))
+        // Jenjang dan jenis lembaga
+        .route(
+            "/api/school-profile",
+            get(crate::school_profile::get).put(crate::school_profile::update),
+        )
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }

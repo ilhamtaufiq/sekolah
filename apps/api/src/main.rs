@@ -11,6 +11,7 @@ mod jurnal;
 mod lms;
 mod report_format;
 mod router;
+mod school_profile;
 mod state;
 mod validate;
 

@@ -19,6 +19,7 @@ const nav = [
   { to: "/nilai", label: "Input nilai", roles: TEACHING },
   { to: "/raport", label: "Raport", roles: STAFF },
   { to: "/pengaturan/format-raport", label: "Format raport", roles: STAFF },
+  { to: "/pengaturan/profil", label: "Profil sekolah", roles: ["admin"] },
   { to: "/ruang-kelas", label: "Ruang kelas", roles: [...STAFF, "siswa"] },
   { to: "/bank-soal", label: "Bank soal", roles: TEACHING },
   { to: "/ujian", label: "Ujian", roles: TEACHING },

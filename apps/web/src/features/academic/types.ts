@@ -13,10 +13,22 @@ export type ClassRow = {
   academic_year_id: string;
   name: string;
   grade_level: number;
+  /** Program kesetaraan PKBM; null bila tidak ada. */
+  program: string | null;
   homeroom_teacher_id: string | null;
   homeroom_teacher_name: string | null;
   student_count: number;
 };
+
+export const PROGRAM_OPTIONS = [
+  { value: "paket_a", label: "Paket A" },
+  { value: "paket_b", label: "Paket B" },
+  { value: "paket_c", label: "Paket C" },
+] as const;
+
+export const PROGRAM_LABELS: Record<string, string> = Object.fromEntries(
+  PROGRAM_OPTIONS.map((o) => [o.value, o.label]),
+);
 
 export type Student = {
   id: string;

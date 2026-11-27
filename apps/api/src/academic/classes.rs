@@ -22,6 +22,8 @@ pub struct ClassRow {
     pub academic_year_id: Uuid,
     pub name: String,
     pub grade_level: u8,
+    /// Program kesetaraan (PKBM): null, paket_a, paket_b, atau paket_c.
+    pub program: Option<String>,
     pub homeroom_teacher_id: Option<Uuid>,
     pub homeroom_teacher_name: Option<String>,
     pub student_count: i64,
@@ -36,10 +38,15 @@ pub struct ClassFilter {
 pub struct ClassInput {
     pub name: String,
     pub grade_level: u8,
+    /// Kosong atau null = tanpa program.
+    pub program: Option<String>,
     pub homeroom_teacher_id: Option<Uuid>,
     /// Kosong = tahun ajaran yang aktif (hanya saat membuat).
     pub academic_year_id: Option<Uuid>,
 }
+
+/// Nilai `program` yang diterima. Nilai lain ditolak di API.
+const PROGRAMS: &[&str] = &["paket_a", "paket_b", "paket_c"];
 
 #[derive(Deserialize)]
 pub struct EnrollInput {
@@ -53,7 +60,7 @@ pub async fn list(
 ) -> AppResult<Json<Vec<ClassRow>>> {
     require_role(&user, READ_ROLES)?;
     let rows = sqlx::query_as(
-        "SELECT c.id, c.academic_year_id, c.name, c.grade_level, c.homeroom_teacher_id, u.name AS homeroom_teacher_name, CAST((SELECT COUNT(*) FROM class_enrollments e WHERE e.class_id = c.id) AS SIGNED) AS student_count FROM classes c LEFT JOIN users u ON u.id = c.homeroom_teacher_id WHERE c.school_id = ? AND c.academic_year_id = COALESCE(?, \
+        "SELECT c.id, c.academic_year_id, c.name, c.grade_level, c.program, c.homeroom_teacher_id, u.name AS homeroom_teacher_name, CAST((SELECT COUNT(*) FROM class_enrollments e WHERE e.class_id = c.id) AS SIGNED) AS student_count FROM classes c LEFT JOIN users u ON u.id = c.homeroom_teacher_id WHERE c.school_id = ? AND c.academic_year_id = COALESCE(?, \
          (SELECT id FROM academic_years WHERE school_id = ? AND is_active = TRUE)) \
          ORDER BY c.grade_level, c.name",
     )
@@ -67,7 +74,7 @@ pub async fn list(
 
 async fn fetch_class(pool: &sqlx::MySqlPool, school_id: Uuid, id: Uuid) -> AppResult<ClassRow> {
     sqlx::query_as(
-        "SELECT c.id, c.academic_year_id, c.name, c.grade_level, c.homeroom_teacher_id, u.name AS homeroom_teacher_name, CAST((SELECT COUNT(*) FROM class_enrollments e WHERE e.class_id = c.id) AS SIGNED) AS student_count FROM classes c LEFT JOIN users u ON u.id = c.homeroom_teacher_id WHERE c.id = ? AND c.school_id = ?",
+        "SELECT c.id, c.academic_year_id, c.name, c.grade_level, c.program, c.homeroom_teacher_id, u.name AS homeroom_teacher_name, CAST((SELECT COUNT(*) FROM class_enrollments e WHERE e.class_id = c.id) AS SIGNED) AS student_count FROM classes c LEFT JOIN users u ON u.id = c.homeroom_teacher_id WHERE c.id = ? AND c.school_id = ?",
     )
         .bind(id)
         .bind(school_id)
@@ -80,7 +87,7 @@ async fn validate_class(
     pool: &sqlx::MySqlPool,
     school_id: Uuid,
     input: &ClassInput,
-) -> AppResult<String> {
+) -> AppResult<(String, Option<String>)> {
     let mut v = Validator::new();
     let name = v.text("name", &input.name, 1, 40);
     v.require(
@@ -88,12 +95,23 @@ async fn validate_class(
         "grade_level",
         "tingkat harus 1–12",
     );
+    let program = match input.program.as_deref().map(str::trim) {
+        None | Some("") => None,
+        Some(p) => {
+            v.require(
+                PROGRAMS.contains(&p),
+                "program",
+                "program harus kosong, paket_a, paket_b, atau paket_c",
+            );
+            Some(p.to_string())
+        }
+    };
     v.finish()?;
 
     if let Some(teacher) = input.homeroom_teacher_id {
         require_teacher(pool, school_id, teacher, "homeroom_teacher_id").await?;
     }
-    Ok(name)
+    Ok((name, program))
 }
 
 pub async fn create(
@@ -102,7 +120,7 @@ pub async fn create(
     Json(input): Json<ClassInput>,
 ) -> AppResult<Json<ClassRow>> {
     require_role(&user, MASTER_WRITE)?;
-    let name = validate_class(&st.pool, user.school_id, &input).await?;
+    let (name, program) = validate_class(&st.pool, user.school_id, &input).await?;
 
     let year = match input.academic_year_id {
         Some(id) => {
@@ -129,14 +147,15 @@ pub async fn create(
 
     let id = Uuid::new_v4();
     sqlx::query(
-        "INSERT INTO classes (id, school_id, academic_year_id, name, grade_level, homeroom_teacher_id) \
-         VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT INTO classes (id, school_id, academic_year_id, name, grade_level, program, homeroom_teacher_id) \
+         VALUES (?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(id)
     .bind(user.school_id)
     .bind(year)
     .bind(&name)
     .bind(input.grade_level)
+    .bind(&program)
     .bind(input.homeroom_teacher_id)
     .execute(&st.pool)
     .await
@@ -152,13 +171,14 @@ pub async fn update(
     Json(input): Json<ClassInput>,
 ) -> AppResult<Json<ClassRow>> {
     require_role(&user, MASTER_WRITE)?;
-    let name = validate_class(&st.pool, user.school_id, &input).await?;
+    let (name, program) = validate_class(&st.pool, user.school_id, &input).await?;
 
     let result = sqlx::query(
-        "UPDATE classes SET name = ?, grade_level = ?, homeroom_teacher_id = ? WHERE id = ? AND school_id = ?",
+        "UPDATE classes SET name = ?, grade_level = ?, program = ?, homeroom_teacher_id = ? WHERE id = ? AND school_id = ?",
     )
     .bind(&name)
     .bind(input.grade_level)
+    .bind(&program)
     .bind(input.homeroom_teacher_id)
     .bind(id)
     .bind(user.school_id)
