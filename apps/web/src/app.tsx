@@ -5,6 +5,8 @@ import { AppShell } from "./components/AppShell";
 import { LoginPage } from "./features/auth/LoginPage";
 import { FormatSettingsPage } from "./features/report-format/FormatSettingsPage";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
+import { StudentDashboard } from "./features/dashboard/StudentDashboard";
+import { TeacherDashboard } from "./features/dashboard/TeacherDashboard";
 import { YearsPage } from "./features/academic/YearsPage";
 import { SubjectsPage } from "./features/academic/SubjectsPage";
 import { ClassesPage, ClassDetailPage } from "./features/academic/ClassesPage";
@@ -26,7 +28,8 @@ import { SchoolProfilePage } from "./features/school/SchoolProfilePage";
 /** Siswa tidak punya beranda admin; langsung ke ruang kelas. */
 function HomeRoute() {
   const { user } = useAuth();
-  if (user?.role === "siswa") return <Navigate to="/ruang-kelas" replace />;
+  if (user?.role === "siswa") return <StudentDashboard />;
+  if (user?.role === "guru" || user?.role === "wali_kelas") return <TeacherDashboard />;
   return <DashboardPage />;
 }
 import { BankPage } from "./features/exams/BankPage";

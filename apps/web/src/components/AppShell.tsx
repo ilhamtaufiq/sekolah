@@ -29,7 +29,7 @@ type NavGroup = { title: string; items: NavItem[] };
 const groups: NavGroup[] = [
   {
     title: "Ringkasan",
-    items: [{ to: "/", label: "Beranda", roles: STAFF, end: true }],
+    items: [{ to: "/", label: "Beranda", roles: [...STAFF, "siswa"], end: true }],
   },
   {
     title: "Akademik",

@@ -8,6 +8,8 @@ import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle }
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { useApiQuery } from "../../lib/hooks";
 import { formatDate, type Summary } from "../academic/types";
+import { previousSemester, previousWeekAttendance } from "./mock";
+import { Delta, DummyNote } from "./parts";
 
 type JournalRow = { id: string };
 type Task = { label: string; count: number; detail: string; to: string; cta: string };
@@ -128,7 +130,7 @@ export function DashboardPage() {
                   <span className="block text-sm font-medium">{t.label}</span>
                   <span className="block text-sm text-muted-foreground">{t.detail}</span>
                 </span>
-                <Button size="sm" render={<Link to={t.to} />}>
+                <Button size="sm" nativeButton={false} render={<Link to={t.to} />}>
                   {t.cta}
                 </Button>
               </li>
@@ -139,9 +141,27 @@ export function DashboardPage() {
 
       {/* Empat angka utama dalam satu bingkai */}
       <div className="grid grid-cols-2 divide-x divide-y overflow-hidden rounded-xl border bg-card lg:grid-cols-4 lg:divide-y-0">
-        <Stat label="Siswa aktif" value={s.active_students} hint="Akun siswa aktif" icon={Users} />
-        <Stat label="Kelas aktif" value={s.classes} hint="Tahun ajaran aktif" icon={School} />
-        <Stat label="Guru & wali kelas" value={s.teachers} hint="Akun aktif" icon={GraduationCap} />
+        <Stat
+          label="Siswa aktif"
+          value={s.active_students}
+          hint="Akun siswa aktif"
+          icon={Users}
+          delta={{ value: s.active_students - previousSemester.active_students, label: "vs semester lalu" }}
+        />
+        <Stat
+          label="Kelas aktif"
+          value={s.classes}
+          hint="Tahun ajaran aktif"
+          icon={School}
+          delta={{ value: s.classes - previousSemester.classes, label: "vs semester lalu" }}
+        />
+        <Stat
+          label="Guru & wali kelas"
+          value={s.teachers}
+          hint="Akun aktif"
+          icon={GraduationCap}
+          delta={{ value: s.teachers - previousSemester.teachers, label: "vs semester lalu" }}
+        />
         <div className="flex items-center justify-between gap-3 p-5">
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground">Kehadiran hari ini</p>
@@ -158,6 +178,7 @@ export function DashboardPage() {
                 <p className="truncate text-xs text-muted-foreground">
                   {s.today.present} hadir dari {s.today.total}
                 </p>
+                <Delta value={rate - previousWeekAttendance} suffix=" poin" label="vs minggu lalu" />
               </>
             )}
           </div>
@@ -251,11 +272,25 @@ export function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <DummyNote>Selisih terhadap semester dan minggu lalu memakai data contoh sampai riwayat periode tersimpan.</DummyNote>
     </div>
   );
 }
 
-function Stat({ label, value, hint, icon: Icon }: { label: string; value: number; hint: string; icon: typeof Users }) {
+function Stat({
+  label,
+  value,
+  hint,
+  icon: Icon,
+  delta,
+}: {
+  label: string;
+  value: number;
+  hint: string;
+  icon: typeof Users;
+  delta?: { value: number; label: string };
+}) {
   return (
     <div className="min-w-0 p-5">
       <div className="flex items-center justify-between gap-2">
@@ -263,7 +298,7 @@ function Stat({ label, value, hint, icon: Icon }: { label: string; value: number
         <Icon className="size-4 text-muted-foreground" aria-hidden />
       </div>
       <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
-      <p className="truncate text-xs text-muted-foreground">{hint}</p>
+      {delta ? <Delta value={delta.value} label={delta.label} /> : <p className="truncate text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 }
