@@ -1,6 +1,8 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../lib/auth";
 import { Button } from "./kit";
+import { Header } from "./layout-header";
+import { Main } from "./layout-main";
 import {
   Sidebar,
   SidebarContent,
@@ -13,9 +15,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-  SidebarTrigger,
+  SidebarRail,
 } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
 
 const STAFF = ["admin", "kepala_sekolah", "guru", "wali_kelas"];
 const LEADERSHIP = ["admin", "kepala_sekolah"];
@@ -100,15 +101,18 @@ export function AppShell() {
 
   return (
     <SidebarProvider>
-      <Sidebar collapsible="icon">
-        <SidebarHeader className="border-b px-4 py-3">
-          <div className="flex items-center gap-2.5">
-            <img src={`${import.meta.env.BASE_URL}logo-mark.png`} alt="" className="size-7 object-contain" />
-            <span className="font-semibold tracking-tight group-data-[collapsible=icon]:hidden">SCHID</span>
+      <Sidebar collapsible="icon" variant="inset">
+        <SidebarHeader>
+          <div className="flex items-center gap-2.5 px-2 py-1.5">
+            <img src={`${import.meta.env.BASE_URL}logo-mark.png`} alt="" className="size-8 object-contain" />
+            <div className="grid min-w-0 flex-1 text-start leading-tight group-data-[collapsible=icon]:hidden">
+              <span className="truncate font-semibold">SCHID</span>
+              <span className="truncate text-xs text-muted-foreground">{user?.school_name}</span>
+            </div>
           </div>
         </SidebarHeader>
 
-        <SidebarContent className="min-h-0 overflow-y-auto">
+        <SidebarContent>
           {groups.map((group) => {
             const items = group.items.filter((item) => item.roles.includes(role));
             if (items.length === 0) return null;
@@ -127,16 +131,14 @@ export function AppShell() {
           })}
         </SidebarContent>
 
-        <SidebarFooter className="border-t p-3">
-          <div className="px-2 pb-2 group-data-[collapsible=icon]:hidden">
+        <SidebarFooter>
+          <div className="px-2 py-1 group-data-[collapsible=icon]:hidden">
             <p className="truncate text-sm font-medium">{user?.name}</p>
-            <p className="truncate text-xs text-muted-foreground">
-              {user?.school_name} · {user?.role}
-            </p>
+            <p className="truncate text-xs text-muted-foreground">{user?.role}</p>
           </div>
           <Button
             variant="ghost"
-            className="w-full justify-start"
+            className="w-full justify-start group-data-[collapsible=icon]:justify-center"
             onClick={() => {
               logout();
               navigate("/login", { replace: true });
@@ -145,17 +147,18 @@ export function AppShell() {
             Keluar
           </Button>
         </SidebarFooter>
+        <SidebarRail />
       </Sidebar>
 
       <SidebarInset>
-        <header className="flex h-12 items-center gap-2 border-b bg-background px-4 md:hidden">
-          <SidebarTrigger />
-          <Separator orientation="vertical" className="h-4" />
-          <span className="text-sm font-medium">SCHID</span>
-        </header>
-        <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-8 sm:py-8">
-          <Outlet />
-        </main>
+        <Header fixed>
+          <span className="truncate text-sm text-muted-foreground">{user?.school_name}</span>
+        </Header>
+        <Main>
+          <div className="mx-auto w-full max-w-5xl">
+            <Outlet />
+          </div>
+        </Main>
       </SidebarInset>
     </SidebarProvider>
   );
