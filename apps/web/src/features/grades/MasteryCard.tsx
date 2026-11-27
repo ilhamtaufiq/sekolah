@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Card, ErrorAlert, Table, cn } from "../../components/ui";
+import { Card, ErrorAlert, Table, cn } from "../../components/kit";
 import { useApiQuery } from "../../lib/hooks";
 import type { MasteryRow } from "./types";
 

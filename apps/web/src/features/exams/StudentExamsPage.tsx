@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { Button, ErrorAlert, Input, Table } from "../../components/ui";
+import { Button, ErrorAlert, Input, Table } from "../../components/kit";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import { type AttemptView, type StudentExam, formatWhen } from "./types";
 

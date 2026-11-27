@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Button, Card, ErrorAlert, Field, Input, Select, Table, cn } from "../../components/ui";
+import { Button, Card, ErrorAlert, Field, Input, Select, Table, cn } from "../../components/kit";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import type { Subject } from "../academic/types";
 import type { Question, QuestionOption } from "./types";

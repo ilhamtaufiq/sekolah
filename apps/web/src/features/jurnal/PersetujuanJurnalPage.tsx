@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { usePagination } from "../../lib/pagination";
-import { Alert, Button, Card, ErrorAlert, Field, Input, Select, Table, cn, Pagination } from "../../components/ui";
+import { Alert, Button, Card, ErrorAlert, Field, Input, Select, Table, cn, Pagination } from "../../components/kit";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import {
   formatTanggal,

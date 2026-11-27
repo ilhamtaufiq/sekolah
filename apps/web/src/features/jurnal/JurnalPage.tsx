@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { usePagination } from "../../lib/pagination";
 import { Link } from "react-router";
-import { Alert, Card, ErrorAlert, Field, Input, Select, Table, Pagination } from "../../components/ui";
+import { Alert, Card, ErrorAlert, Field, Input, Select, Table, Pagination } from "../../components/kit";
 import { useAuth } from "../../lib/auth";
 import { useApiQuery } from "../../lib/hooks";
 import { formatTanggal, JOURNAL_STATUS_LABEL, type Journal, type JournalRekap, type JournalStatus } from "./types";

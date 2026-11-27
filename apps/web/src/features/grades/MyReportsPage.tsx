@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Alert, Button, ErrorAlert, Table } from "../../components/ui";
+import { Alert, Button, ErrorAlert, Table } from "../../components/kit";
 import { useAuth } from "../../lib/auth";
 import { useApiQuery } from "../../lib/hooks";
 import { downloadPdf } from "./api";

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { Alert, Button, Card, ErrorAlert, Field, Input, Table } from "../../components/ui";
+import { Alert, Button, Card, ErrorAlert, Field, Input, Table } from "../../components/kit";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 
 type MaterialOption = {

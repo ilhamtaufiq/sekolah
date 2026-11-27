@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Button, Card, ErrorAlert, Field, Input, Table, PageHeader } from "../../components/ui";
+import { Button, Card, ErrorAlert, Field, Input, Table, PageHeader } from "../../components/kit";
 import { useAuth } from "../../lib/auth";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import type { Subject } from "./types";

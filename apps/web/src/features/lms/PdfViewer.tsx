@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.js?url";
 import { api } from "../../lib/api";
-import { Button } from "../../components/ui";
+import { Button } from "../../components/kit";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Alert, Button, Card, Table, PageHeader } from "../../components/ui";
+import { Alert, Button, Card, Table, PageHeader } from "../../components/kit";
 import { ApiError, api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { downloadPdf } from "./api";

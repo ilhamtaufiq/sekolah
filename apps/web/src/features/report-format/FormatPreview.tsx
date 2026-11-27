@@ -1,6 +1,6 @@
 import { SECTION_LABELS, type SectionKind } from "./schema";
 import type { ReportFormatConfig } from "./api";
-import { Card } from "../../components/ui";
+import { Card } from "../../components/kit";
 
 /** Pratinjau kasar, bukan render PDF. Cukup untuk melihat kop, predikat, dan urutan bagian. */
 export function FormatPreview({ config }: { config: ReportFormatConfig }) {

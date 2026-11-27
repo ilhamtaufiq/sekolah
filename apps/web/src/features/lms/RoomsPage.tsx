@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router";
-import { Alert, Button, Card, ErrorAlert, Field, Input, Table, cn } from "../../components/ui";
+import { Alert, Button, Card, ErrorAlert, Field, Input, Table, cn } from "../../components/kit";
 import { useAuth } from "../../lib/auth";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
 import { VideoPlayer } from "./VideoPlayer";

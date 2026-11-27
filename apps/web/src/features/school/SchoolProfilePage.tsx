@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Alert, Button, Card, ErrorAlert, Field, Select, PageHeader } from "../../components/ui";
+import { Alert, Button, Card, ErrorAlert, Field, Select, PageHeader } from "../../components/kit";
 import { useAuth } from "../../lib/auth";
 import { useApiMutation } from "../../lib/hooks";
 import { JENIS_LEMBAGA_OPTIONS, useSchoolTerms, type JenisLembaga, type SchoolProfile } from "./useSchoolTerms";
