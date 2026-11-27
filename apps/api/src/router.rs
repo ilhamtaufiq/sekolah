@@ -227,6 +227,11 @@ pub fn build(state: AppState) -> Router {
             "/api/student/attempts/{id}/submit",
             post(exams::attempts::submit),
         )
+        // Jenjang dan jenis lembaga
+        .route(
+            "/api/school-profile",
+            get(crate::school_profile::get).put(crate::school_profile::update),
+        )
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }

@@ -16,6 +16,7 @@ import { GradesPage } from "./features/grades/GradesPage";
 import { ReportsPage } from "./features/grades/ReportsPage";
 import { RoomsPage, RoomPage } from "./features/lms/RoomsPage";
 import { TaskPage } from "./features/lms/TaskPage";
+import { SchoolProfilePage } from "./features/school/SchoolProfilePage";
 
 /** Siswa tidak punya beranda admin; langsung ke ruang kelas. */
 function HomeRoute() {
@@ -63,6 +64,7 @@ export function App() {
           <Route path="nilai" element={<GradesPage />} />
           <Route path="raport" element={<ReportsPage />} />
           <Route path="pengaturan/format-raport" element={<FormatSettingsPage />} />
+          <Route path="pengaturan/profil" element={<SchoolProfilePage />} />
           <Route path="ruang-kelas" element={<RoomsPage />} />
           <Route path="ruang-kelas/:id" element={<RoomPage />} />
           <Route path="tugas/:id" element={<TaskPage />} />

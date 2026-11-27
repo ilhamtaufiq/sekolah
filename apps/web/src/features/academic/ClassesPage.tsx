@@ -3,7 +3,8 @@ import { Link, useParams } from "react-router";
 import { Alert, Button, Card, ErrorAlert, Field, Input, Select, Table } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
-import { ROLE_LABELS, type ClassRow, type StaffUser, type Student } from "./types";
+import { useSchoolTerms } from "../school/useSchoolTerms";
+import { PROGRAM_LABELS, PROGRAM_OPTIONS, ROLE_LABELS, type ClassRow, type StaffUser, type Student } from "./types";
 
 const TEACHER_ROLES = ["guru", "wali_kelas"];
 
@@ -13,16 +14,19 @@ export function ClassesPage() {
   const classes = useApiQuery<ClassRow[]>(["classes"], "/classes");
   const staff = useApiQuery<StaffUser[]>(["staff"], canEdit ? "/users" : null);
   const teachers = (staff.data ?? []).filter((u) => TEACHER_ROLES.includes(u.role) && u.is_active);
+  const { terms } = useSchoolTerms();
 
   const [editing, setEditing] = useState<ClassRow | null>(null);
   const [name, setName] = useState("");
   const [grade, setGrade] = useState("7");
+  const [program, setProgram] = useState("");
   const [homeroom, setHomeroom] = useState("");
 
   const reset = () => {
     setEditing(null);
     setName("");
     setGrade("7");
+    setProgram("");
     setHomeroom("");
   };
 
@@ -33,6 +37,7 @@ export function ClassesPage() {
       body: () => ({
         name,
         grade_level: Number(grade),
+        program: program || null,
         homeroom_teacher_id: homeroom || null,
       }),
     },
@@ -49,6 +54,7 @@ export function ClassesPage() {
     setEditing(c);
     setName(c.name);
     setGrade(String(c.grade_level));
+    setProgram(c.program ?? "");
     setHomeroom(c.homeroom_teacher_id ?? "");
   };
 
@@ -56,15 +62,15 @@ export function ClassesPage() {
     <div className="space-y-6">
       <header>
         <p className="text-sm text-slate-500">Akademik</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Kelas</h1>
-        <p className="text-sm text-slate-600">Daftar kelas di tahun ajaran yang aktif.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">{terms.class}</h1>
+        <p className="text-sm text-slate-600">Daftar {terms.class.toLowerCase()} di tahun ajaran yang aktif.</p>
       </header>
 
       <ErrorAlert error={save.error} />
 
       {canEdit && (
         <Card title={editing ? `Ubah kelas ${editing.name}` : "Tambah kelas"}>
-          <form onSubmit={onSubmit} className="grid items-end gap-4 md:grid-cols-[1fr_120px_1fr_auto_auto]">
+          <form onSubmit={onSubmit} className="grid items-end gap-4 md:grid-cols-[1fr_120px_140px_1fr_auto_auto]">
             <Field label="Nama kelas">
               <Input value={name} onChange={(e) => setName(e.target.value)} required maxLength={40} placeholder="7A" />
             </Field>
@@ -72,6 +78,14 @@ export function ClassesPage() {
               <Select value={grade} onChange={(e) => setGrade(e.target.value)}>
                 {Array.from({ length: 12 }, (_, i) => (
                   <option key={i + 1} value={i + 1}>{i + 1}</option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Program">
+              <Select value={program} onChange={(e) => setProgram(e.target.value)}>
+                <option value="">— tidak ada —</option>
+                {PROGRAM_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
               </Select>
             </Field>
@@ -94,17 +108,18 @@ export function ClassesPage() {
         <Alert tone="info">Belum ada kelas di tahun ajaran aktif.</Alert>
       )}
       {classes.data && classes.data.length > 0 && (
-        <Table head={["Kelas", "Tingkat", "Wali kelas", "Siswa", ""]}>
+        <Table head={[terms.class, "Tingkat", "Program", "Wali kelas", terms.student, ""]}>
           {classes.data.map((c) => (
             <tr key={c.id}>
               <td className="px-4 py-3 font-medium">{c.name}</td>
               <td className="px-4 py-3">{c.grade_level}</td>
+              <td className="px-4 py-3">{c.program ? PROGRAM_LABELS[c.program] ?? c.program : <span className="text-slate-400">—</span>}</td>
               <td className="px-4 py-3">{c.homeroom_teacher_name ?? <span className="text-slate-400">—</span>}</td>
               <td className="px-4 py-3">{c.student_count}</td>
               <td className="space-x-2 px-4 py-3 text-right">
                 {canEdit && <Button variant="ghost" onClick={() => startEdit(c)}>Ubah</Button>}
                 <Link to={`/kelas/${c.id}`} className="inline-flex items-center rounded-lg px-3.5 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50">
-                  Rombel →
+                  Buka →
                 </Link>
               </td>
             </tr>
@@ -119,6 +134,7 @@ export function ClassDetailPage() {
   const { id = "" } = useParams();
   const { user } = useAuth();
   const canEdit = user?.role === "admin";
+  const { terms } = useSchoolTerms();
   const classes = useApiQuery<ClassRow[]>(["classes"], "/classes");
   const roster = useApiQuery<Student[]>(["roster", id], `/classes/${id}/students`);
   const students = useApiQuery<Student[]>(["students", ""], canEdit ? "/students" : null);
@@ -150,7 +166,7 @@ export function ClassDetailPage() {
     <div className="space-y-6">
       <header>
         <Link to="/kelas" className="text-sm text-brand-700 hover:underline">← Semua kelas</Link>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Rombel {klass?.name ?? ""}</h1>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight">{terms.class} {klass?.name ?? ""}</h1>
         {klass && (
           <p className="text-sm text-slate-600">
             Tingkat {klass.grade_level} · Wali kelas: {klass.homeroom_teacher_name ?? "belum ditentukan"}
@@ -160,7 +176,7 @@ export function ClassDetailPage() {
 
       <ErrorAlert error={add.error ?? remove.error} />
 
-      <Card title={`Siswa di kelas (${roster.data?.length ?? 0})`}>
+      <Card title={`${terms.student} (${roster.data?.length ?? 0})`}>
         {roster.data && roster.data.length === 0 && <p className="text-sm text-slate-500">Belum ada siswa.</p>}
         {roster.data && roster.data.length > 0 && (
           <Table head={["NIS", "Nama", "L/P", ""]}>
@@ -184,8 +200,8 @@ export function ClassDetailPage() {
 
       {canEdit && (
         <Card
-          title="Tambah siswa"
-          description="Siswa yang sudah berada di kelas lain pada tahun ajaran ini tidak ditampilkan."
+          title={`Tambah ${terms.student.toLowerCase()}`}
+          description={`${terms.student} yang sudah berada di ${terms.class.toLowerCase()} lain pada tahun ajaran ini tidak ditampilkan.`}
           actions={<Button onClick={onAdd} disabled={picked.length === 0 || add.isPending}>Tambahkan {picked.length || ""}</Button>}
         >
           {candidates.length === 0 && <p className="text-sm text-slate-500">Tidak ada siswa aktif yang bisa ditambahkan.</p>}
