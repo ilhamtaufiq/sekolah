@@ -38,12 +38,20 @@
   ] else if kind == "sikap" [
     #text(weight: "bold")[B. Sikap dan perilaku]
     #v(0.2em)
-    #if d.notes.attitude != none [#d.notes.attitude] else [-]
+    #let sikap = d.at("sikap", default: ())
+    #for s in sikap [
+      #s.aspect: predikat #s.predicate#if s.description != none [ (#s.description)] \
+    ]
+    #if d.notes.attitude != none [#d.notes.attitude] else if sikap.len() == 0 [-]
     #v(0.6em)
   ] else if kind == "ekstrakurikuler" [
     #text(weight: "bold")[C. Ekstrakurikuler]
     #v(0.2em)
-    #if d.notes.extracurricular != none [#d.notes.extracurricular] else [-]
+    #let ekskul = d.at("ekstrakurikuler_items", default: ())
+    #for e in ekskul [
+      #e.name: predikat #e.predicate#if e.description != none [ (#e.description)] \
+    ]
+    #if d.notes.extracurricular != none [#d.notes.extracurricular] else if ekskul.len() == 0 [-]
     #v(0.6em)
   ] else if kind == "absensi" [
     #text(weight: "bold")[D. Ketidakhadiran]
@@ -61,6 +69,17 @@
     #text(weight: "bold")[F. Catatan wali kelas]
     #v(0.2em)
     #if d.notes.homeroom != none [#d.notes.homeroom] else [-]
+    #v(0.6em)
+  ] else if kind == "ketuntasan_tujuan" [
+    #let m = d.at("mastery", default: (tuntas: 0, belum_tuntas: 0, total: 0, mapel_belum: ()))
+    #text(weight: "bold")[Ketuntasan tujuan pembelajaran]
+    #v(0.2em)
+    #if m.total == 0 [
+      Belum ada nilai akhir mapel.
+    ] else [
+      #m.tuntas dari #m.total mapel tuntas KKM.
+      #if m.belum_tuntas > 0 [ Belum tuntas: #m.mapel_belum.join(", ")]
+    ]
     #v(0.6em)
   ]
 }

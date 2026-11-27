@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use axum::{
     Json,
     extract::{Query, State},
@@ -190,5 +192,96 @@ pub async fn list(
     .bind(f.semester_id)
     .fetch_all(&st.pool)
     .await?;
+    Ok(Json(rows))
+}
+
+// ---------- Ketuntasan tujuan per mapel ----------
+
+#[derive(Serialize)]
+pub struct MasteryItem {
+    pub subject: String,
+    pub score: Option<f64>,
+    /// None bila nilai akhir belum dihitung atau belum lengkap.
+    pub tuntas: Option<bool>,
+}
+
+#[derive(Serialize)]
+pub struct MasteryRow {
+    pub student_id: Uuid,
+    pub nis: String,
+    pub name: String,
+    pub subjects: Vec<MasteryItem>,
+    pub tuntas: usize,
+    pub belum_tuntas: usize,
+}
+
+#[derive(Deserialize)]
+pub struct MasteryFilter {
+    pub class_id: Uuid,
+    pub semester_id: Uuid,
+}
+
+/// Ketuntasan per mapel per siswa. Memakai KKM yang tersimpan di nilai akhir,
+/// yaitu KKM dari format raport saat nilai dihitung (snapshot), sehingga konsisten dengan PDF.
+pub async fn mastery(
+    State(st): State<AppState>,
+    user: AuthUser,
+    Query(f): Query<MasteryFilter>,
+) -> AppResult<Json<Vec<MasteryRow>>> {
+    require_role(&user, READ_ROLES)?;
+    let year: Uuid =
+        sqlx::query_scalar("SELECT academic_year_id FROM classes WHERE id = ? AND school_id = ?")
+            .bind(f.class_id)
+            .bind(user.school_id)
+            .fetch_optional(&st.pool)
+            .await?
+            .ok_or(AppError::NotFound)?;
+    semester_range(&st.pool, user.school_id, f.semester_id, year).await?;
+
+    let students: Vec<(Uuid, String, String)> = sqlx::query_as(
+        "SELECT s.id, s.nis, s.name FROM class_enrollments en JOIN students s ON s.id = en.student_id \
+         WHERE en.class_id = ? AND en.school_id = ? ORDER BY s.name",
+    )
+    .bind(f.class_id)
+    .bind(user.school_id)
+    .fetch_all(&st.pool)
+    .await?;
+
+    let finals: Vec<(Uuid, String, Option<f64>, Option<bool>)> = sqlx::query_as(
+        "SELECT f.student_id, sub.name, f.score, f.kkm_met FROM final_grades f \
+         JOIN teaching_assignments a ON a.id = f.assignment_id \
+         JOIN subjects sub ON sub.id = a.subject_id \
+         WHERE f.school_id = ? AND f.semester_id = ? AND a.class_id = ? ORDER BY sub.name",
+    )
+    .bind(user.school_id)
+    .bind(f.semester_id)
+    .bind(f.class_id)
+    .fetch_all(&st.pool)
+    .await?;
+
+    let mut by_student: HashMap<Uuid, Vec<MasteryItem>> = HashMap::new();
+    for (sid, subject, score, tuntas) in finals {
+        by_student.entry(sid).or_default().push(MasteryItem {
+            subject,
+            score,
+            tuntas,
+        });
+    }
+    let rows = students
+        .into_iter()
+        .map(|(sid, nis, name)| {
+            let subjects = by_student.remove(&sid).unwrap_or_default();
+            let tuntas = subjects.iter().filter(|s| s.tuntas == Some(true)).count();
+            let belum_tuntas = subjects.iter().filter(|s| s.tuntas == Some(false)).count();
+            MasteryRow {
+                student_id: sid,
+                nis,
+                name,
+                subjects,
+                tuntas,
+                belum_tuntas,
+            }
+        })
+        .collect();
     Ok(Json(rows))
 }

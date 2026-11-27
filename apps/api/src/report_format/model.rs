@@ -80,6 +80,8 @@ pub enum SectionKind {
     Prestasi,
     CatatanWaliKelas,
     Ranking,
+    /// Ringkasan ketuntasan tujuan per mapel. Opsional: format lama tidak memuatnya.
+    KetuntasanTujuan,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -387,6 +389,14 @@ mod tests {
         f.page.margin_mm = 2.0;
         f.grading.decimal_places = 5;
         assert!(f.validate().len() >= 3);
+    }
+
+    #[test]
+    fn ketuntasan_section_has_stable_wire_name() {
+        let json = serde_json::to_value(SectionKind::KetuntasanTujuan).unwrap();
+        assert_eq!(json, serde_json::json!("ketuntasan_tujuan"));
+        let parsed: SectionKind = serde_json::from_value(json).unwrap();
+        assert_eq!(parsed, SectionKind::KetuntasanTujuan);
     }
 
     #[test]
