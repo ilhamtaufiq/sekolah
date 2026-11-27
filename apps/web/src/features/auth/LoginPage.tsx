@@ -42,7 +42,7 @@ export function LoginPage() {
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
           <div className="mx-auto flex size-11 items-center justify-center rounded-xl bg-brand-600 text-lg font-bold text-white">S</div>
-          <h1 className="mt-4 text-xl font-semibold">Masuk ke SIMAS</h1>
+          <h1 className="mt-4 text-xl font-semibold">Masuk ke SCHID</h1>
           <p className="mt-1 text-sm text-slate-500">Gunakan akun yang diberikan admin sekolah.</p>
         </div>
 

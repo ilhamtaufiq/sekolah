@@ -1,4 +1,4 @@
-# SIMAS — Sistem Informasi Manajemen Sekolah
+# SCHID — Sistem manajemen sekolah, PKBM, PAUD, dan TK
 
 Multi-tenant (database: MySQL 8.4): satu deployment melayani banyak sekolah. Setiap sekolah diidentifikasi dengan `slug` dan semua datanya terpisah lewat `school_id` yang diambil dari token, bukan dari input klien.
 

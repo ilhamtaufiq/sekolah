@@ -1,6 +1,6 @@
 # Satu origin untuk landing, aplikasi, dan API: tidak perlu CORS.
 #   /        landing page (statis)
-#   /app/    aplikasi SIMAS (SPA)
+#   /app/    aplikasi SCHID (SPA)
 #   /api/    backend
 server {
     listen 80;
