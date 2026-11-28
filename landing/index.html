@@ -108,39 +108,34 @@
     .hero { padding-top: 64px; padding-bottom: 56px; }
     @media (min-width: 900px) { .hero { padding-top: 88px; } .hero-grid { grid-template-columns: 1fr 1fr; } }
     .hero-grid { display: grid; gap: 44px; align-items: center; }
+    .hero-art { margin: 0; }
     .hero h1 { margin-top: 14px; font-size: clamp(34px, 5vw, 50px); line-height: 1.1; font-weight: 700; letter-spacing: -0.03em; text-wrap: balance; color: var(--navy); }
     :root:not([data-theme="light"]) .hero h1 { color: var(--fg); }
     .hero .lead { font-size: 18px; margin-top: 18px; }
     .hero-actions { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 10px; }
 
-    /* Pratinjau dashboard: kotak sederhana, tanpa efek */
-    .preview { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
-    .preview-head { padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; }
-    .preview-stats { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); background: var(--bg); }
-    .preview-stats div { padding: 14px; border-right: 1px solid var(--line); }
-    .preview-stats div:last-child { border-right: 0; }
-    .preview-stats small { color: var(--muted); font-size: 12px; }
-    .preview-stats b { display: block; margin-top: 2px; font-size: 22px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
-    .preview-body { padding: 14px; background: var(--bg); }
-    .preview-body .row { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-    .track { height: 6px; border-radius: 99px; background: var(--surface); overflow: hidden; margin-bottom: 14px; }
-    .fill { height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width 1000ms ease-out; }
-    .fill.green { background: var(--green); }
-    .fill.orange { background: var(--orange); }
-    .is-in .fill { width: var(--w); }
-    .preview-caption { padding: 10px 14px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); }
+    /* Gambar: kotak tipis dengan sudut membulat, mengikuti warna tema */
+    .art { margin: 0; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: var(--surface); }
+    .art img { display: block; width: 100%; height: auto; }
 
     /* Daftar modul: satu kolom per baris, dipisah garis */
     .modules { margin-top: 36px; border-top: 1px solid var(--line); }
     .module { display: grid; gap: 4px; padding: 20px 0; border-bottom: 1px solid var(--line); }
     @media (min-width: 720px) { .module { grid-template-columns: 220px 1fr; gap: 24px; } }
+    .module-title { display: flex; align-items: center; gap: 12px; }
     .module h3 { font-size: 16px; font-weight: 600; }
+    .mod-ico { width: 40px; height: 40px; flex: none; object-fit: contain; }
+    /* Ikon berwarna navy; di tema gelap dibalik agar tetap terlihat */
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .mod-ico { filter: invert(1) hue-rotate(180deg); } }
+    :root[data-theme="dark"] .mod-ico { filter: invert(1) hue-rotate(180deg); }
     .module p { color: var(--muted); font-size: 15px; text-wrap: pretty; }
 
     /* Jenjang */
     .levels { margin-top: 36px; display: grid; gap: 0; }
     @media (min-width: 720px) { .levels { grid-template-columns: repeat(3, 1fr); gap: 28px; } }
-    .level { padding: 20px 0; border-top: 2px solid var(--line); }
+    .level { padding: 20px 0; }
+    .level-art img { aspect-ratio: 4 / 3; object-fit: cover; }
+    .level-art { margin-bottom: 18px; }
     .level h3 { font-size: 16px; font-weight: 600; }
     .level p { margin-top: 6px; color: var(--muted); font-size: 15px; text-wrap: pretty; }
 
@@ -154,6 +149,7 @@
 
     /* Penutup */
     .closing { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; }
+    .closing-art { flex-basis: 100%; max-width: 520px; margin: 0; }
     .closing p { color: var(--muted); margin-top: 6px; }
 
     footer { border-top: 1px solid var(--line); padding-block: 24px; color: var(--muted); font-size: 14px; }
@@ -200,23 +196,9 @@
           </div>
         </div>
 
-        <div class="preview reveal" id="preview" aria-label="Contoh tampilan dashboard dengan data demo">
-          <div class="preview-head"><span>Ringkasan sekolah</span><span>Data demo</span></div>
-          <div class="preview-stats">
-            <div><small>Siswa aktif</small><b>80</b></div>
-            <div><small>Kelas</small><b>4</b></div>
-            <div><small>Kehadiran hari ini</small><b>92%</b></div>
-          </div>
-          <div class="preview-body">
-            <div class="row"><span>Bab 1 · Pecahan</span><span>100%</span></div>
-            <div class="track"><div class="fill green" style="--w:100%"></div></div>
-            <div class="row"><span>Jurnal disetujui</span><span>91%</span></div>
-            <div class="track"><div class="fill" style="--w:91%"></div></div>
-            <div class="row"><span>Tugas dinilai</span><span>64%</span></div>
-            <div class="track"><div class="fill orange" style="--w:64%"></div></div>
-          </div>
-          <div class="preview-caption">Contoh tampilan dengan data demo.</div>
-        </div>
+        <figure class="art reveal hero-art">
+          <img src="/assets/hero-kelas.jpg" alt="Ilustrasi ruang kelas dengan guru dan siswa sedang belajar" width="1358" height="1043">
+        </figure>
       </div>
     </section>
 
@@ -227,14 +209,14 @@
         <p class="lead">Modul-modulnya saling terhubung. Nilai yang diinput guru masuk ke raport, dan absensi langsung muncul di dashboard.</p>
 
         <div class="modules">
-          <div class="module reveal"><h3>Akademik</h3><p>Tahun ajaran, semester, kelas, rombel, mapel, penugasan guru, dan jadwal. Jadwal yang bentrok ditolak saat disimpan.</p></div>
-          <div class="module reveal"><h3>Absensi</h3><p>Wali kelas mencatat absensi harian. Guru mencatat absensi per mapel. Rekap dan tren dihitung otomatis.</p></div>
-          <div class="module reveal"><h3>Jurnal mengajar</h3><p>Guru mencatat materi per jam pelajaran. Kepala sekolah menyetujui atau mengembalikan dengan catatan. Hanya jurnal yang disetujui masuk ke laporan.</p></div>
-          <div class="module reveal"><h3>Nilai dan raport</h3><p>Komponen nilai dengan bobot, KKM atau KKTP, predikat, sikap, dan ekstrakurikuler. Raport bisa diunduh siswa dalam bentuk PDF.</p></div>
+          <div class="module reveal"><div class="module-title"><img class="mod-ico" src="/assets/ikon-akademik.png" alt="" width="40" height="40" loading="lazy"><h3>Akademik</h3></div><p>Tahun ajaran, semester, kelas, rombel, mapel, penugasan guru, dan jadwal. Jadwal yang bentrok ditolak saat disimpan.</p></div>
+          <div class="module reveal"><div class="module-title"><img class="mod-ico" src="/assets/ikon-absensi.png" alt="" width="40" height="40" loading="lazy"><h3>Absensi</h3></div><p>Wali kelas mencatat absensi harian. Guru mencatat absensi per mapel. Rekap dan tren dihitung otomatis.</p></div>
+          <div class="module reveal"><div class="module-title"><img class="mod-ico" src="/assets/ikon-jurnal.png" alt="" width="40" height="40" loading="lazy"><h3>Jurnal mengajar</h3></div><p>Guru mencatat materi per jam pelajaran. Kepala sekolah menyetujui atau mengembalikan dengan catatan. Hanya jurnal yang disetujui masuk ke laporan.</p></div>
+          <div class="module reveal"><div class="module-title"><img class="mod-ico" src="/assets/ikon-nilai.png" alt="" width="40" height="40" loading="lazy"><h3>Nilai dan raport</h3></div><p>Komponen nilai dengan bobot, KKM atau KKTP, predikat, sikap, dan ekstrakurikuler. Raport bisa diunduh siswa dalam bentuk PDF.</p></div>
           <div class="module reveal"><h3>Cetak massal</h3><p>Cetak raport satu kelas sekaligus. Berkas hasilnya diunduh dalam satu ZIP.</p></div>
-          <div class="module reveal"><h3>Kenaikan dan kelulusan</h3><p>Keputusan naik, tinggal, atau lulus dicatat per siswa dan disimpan sebagai riwayat. Siswa yang lulus mendapat sertifikat dengan nomor unik.</p></div>
+          <div class="module reveal"><div class="module-title"><img class="mod-ico" src="/assets/ikon-sertifikat.png" alt="" width="40" height="40" loading="lazy"><h3>Kenaikan dan kelulusan</h3></div><p>Keputusan naik, tinggal, atau lulus dicatat per siswa dan disimpan sebagai riwayat. Siswa yang lulus mendapat sertifikat dengan nomor unik.</p></div>
           <div class="module reveal"><h3>Ruang kelas</h3><p>Materi, tugas, pengumuman, dan forum diskusi per materi. Tugas yang terlambat ditandai, tetapi tetap bisa dikumpulkan.</p></div>
-          <div class="module reveal"><h3>Pembelajaran</h3><p>Video YouTube dan berkas PDF disusun dalam satu urutan. Progres dicatat per halaman PDF dan per video.</p></div>
+          <div class="module reveal"><div class="module-title"><img class="mod-ico" src="/assets/ikon-pembelajaran.png" alt="" width="40" height="40" loading="lazy"><h3>Pembelajaran</h3></div><p>Video YouTube dan berkas PDF disusun dalam satu urutan. Progres dicatat per halaman PDF dan per video.</p></div>
           <div class="module reveal"><h3>Ujian</h3><p>Bank soal, jadwal ujian, token, waktu yang dihitung di server, dan analisis butir soal.</p></div>
           <div class="module reveal"><h3>Portal siswa dan orang tua</h3><p>Nilai, absensi, tugas, dan raport dilihat dari akun masing-masing.</p></div>
         </div>
@@ -248,9 +230,9 @@
         <p class="lead">Istilah di aplikasi menyesuaikan jenis lembaga. Di PKBM, peserta disebut warga belajar dan kelas disebut rombel.</p>
 
         <div class="levels">
-          <div class="level reveal"><h3>TK dan PAUD</h3><p>Peserta didik, kelas, dan penilaian perkembangan sesuai aturan lembaga.</p></div>
-          <div class="level reveal"><h3>SD, SMP, dan SMA</h3><p>Siswa, kelas, mapel, nilai semester, kenaikan kelas, dan kelulusan.</p></div>
-          <div class="level reveal"><h3>PKBM</h3><p>Warga belajar, rombel, paket A, B, dan C, jurnal mengajar, dan sertifikat bernomor.</p></div>
+          <div class="level reveal"><figure class="art level-art"><img src="/assets/jenjang-paud.jpg" alt="" width="640" height="760" loading="lazy"></figure><h3>TK dan PAUD</h3><p>Peserta didik, kelas, dan penilaian perkembangan sesuai aturan lembaga.</p></div>
+          <div class="level reveal"><figure class="art level-art"><img src="/assets/jenjang-sekolah.jpg" alt="" width="640" height="760" loading="lazy"></figure><h3>SD, SMP, dan SMA</h3><p>Siswa, kelas, mapel, nilai semester, kenaikan kelas, dan kelulusan.</p></div>
+          <div class="level reveal"><figure class="art level-art"><img src="/assets/jenjang-pkbm.jpg" alt="" width="640" height="760" loading="lazy"></figure><h3>PKBM</h3><p>Warga belajar, rombel, paket A, B, dan C, jurnal mengajar, dan sertifikat bernomor.</p></div>
         </div>
       </div>
     </section>
@@ -271,6 +253,7 @@
 
     <section class="border-t-line">
       <div class="wrap closing">
+        <figure class="art closing-art"><img src="/assets/laptop-dashboard.jpg" alt="" width="809" height="584" loading="lazy"></figure>
         <div>
           <h2 class="h2">Mulai dengan satu lembaga</h2>
           <p>Tambah modul sesuai kebutuhan. Akun admin dibuat oleh tim SCHID.</p>
