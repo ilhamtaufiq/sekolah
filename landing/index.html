@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SCHID — Aplikasi Manajemen Sekolah, PKBM, PAUD, dan TK</title>
-  <meta name="description" content="Satu aplikasi untuk sekolah, PKBM, PAUD, dan TK. Akademik, absensi, jurnal, nilai, raport, pembelajaran daring, dan ujian.">
+  <title>SCHID — Aplikasi manajemen sekolah, PKBM, PAUD, dan TK</title>
+  <meta name="description" content="SCHID mencatat siswa, kelas, absensi, jurnal, nilai, dan raport untuk sekolah, PKBM, PAUD, dan TK dalam satu aplikasi.">
 
-  <!-- Aset dilayani dari /app/ -->
   <link rel="icon" href="/app/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="/app/favicon-32.png">
   <link rel="apple-touch-icon" href="/app/apple-touch-icon.png">
@@ -16,10 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&display=swap" rel="stylesheet">
 
   <style>
-    /* ==========================================================================
-       Palet dari logo SCHID
-       navy #14305a · biru #2b7bc4 · teal #2fb6c9 · hijau #6cc04a · oranye #f5a03a
-       ========================================================================== */
+    /* Palet dari logo SCHID. Biru adalah satu-satunya warna aksen; yang lain hanya untuk status. */
     :root {
       --navy: #14305a;
       --blue: #2b7bc4;
@@ -28,51 +24,42 @@
       --orange: #f5a03a;
 
       --bg: #ffffff;
-      --surface: #f6f9fc;
-      --surface-2: #eef4fa;
+      --surface: #f6f8fb;
       --fg: #14305a;
-      --muted: #5a6f8c;
-      --line: #dfe8f2;
+      --muted: #566b86;
+      --line: #e1e8f1;
       --accent: #2b7bc4;
       --accent-hover: #1f63a6;
-      --accent-soft: rgba(43, 123, 196, 0.10);
       --on-accent: #ffffff;
-      --shadow: 0 1px 2px rgba(20, 48, 90, 0.05), 0 10px 30px -14px rgba(20, 48, 90, 0.18);
       color-scheme: light;
     }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
-        --bg: #0a1a30;
-        --surface: #0f2340;
-        --surface-2: #132a4b;
-        --fg: #eaf2fb;
-        --muted: #9db2cc;
-        --line: #1f3a5e;
+        --bg: #0b1a2e;
+        --surface: #10233d;
+        --fg: #e8f0fa;
+        --muted: #9fb3cc;
+        --line: #1f3553;
         --accent: #4f9be0;
         --accent-hover: #6aaee9;
-        --accent-soft: rgba(79, 155, 224, 0.16);
         --on-accent: #06142a;
-        --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 34px -16px rgba(0, 0, 0, 0.6);
         color-scheme: dark;
       }
     }
     :root[data-theme="dark"] {
-      --bg: #0a1a30;
-      --surface: #0f2340;
-      --surface-2: #132a4b;
-      --fg: #eaf2fb;
-      --muted: #9db2cc;
-      --line: #1f3a5e;
+      --bg: #0b1a2e;
+      --surface: #10233d;
+      --fg: #e8f0fa;
+      --muted: #9fb3cc;
+      --line: #1f3553;
       --accent: #4f9be0;
       --accent-hover: #6aaee9;
-      --accent-soft: rgba(79, 155, 224, 0.16);
       --on-accent: #06142a;
-      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 34px -16px rgba(0, 0, 0, 0.6);
       color-scheme: dark;
     }
 
     * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
       background: var(--bg);
@@ -81,327 +68,214 @@
       font-size: 16px;
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
-      overflow-x: clip;
     }
     a { color: inherit; text-decoration: none; }
-    h1, h2, h3, p, ul, ol { margin: 0; }
-    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+    h1, h2, h3, p, ol, ul { margin: 0; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
 
-    .wrap { width: 100%; max-width: 1120px; margin-inline: auto; padding-inline: 20px; }
-    section { padding-block: 72px; scroll-margin-top: 72px; }
-    @media (min-width: 720px) { section { padding-block: 96px; } }
+    .wrap { width: 100%; max-width: 1040px; margin-inline: auto; padding-inline: 20px; }
+    section { padding-block: 64px; }
+    @media (min-width: 720px) { section { padding-block: 88px; } }
+    .border-t-line { border-top: 1px solid var(--line); }
 
-    .eyebrow {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 5px 12px; border-radius: 999px;
-      background: var(--accent-soft); color: var(--accent);
-      font-size: 13px; font-weight: 600;
-    }
-    .eyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
-    .section-title { font-size: clamp(26px, 4vw, 36px); line-height: 1.2; font-weight: 700; letter-spacing: -0.02em; text-wrap: balance; }
-    .section-lead { margin-top: 12px; color: var(--muted); font-size: 17px; max-width: 60ch; text-wrap: pretty; }
+    .label { font-size: 13px; font-weight: 600; color: var(--accent); }
+    .h2 { font-size: clamp(24px, 3.4vw, 32px); line-height: 1.2; font-weight: 650; letter-spacing: -0.02em; text-wrap: balance; }
+    .lead { margin-top: 12px; color: var(--muted); font-size: 17px; max-width: 58ch; text-wrap: pretty; }
 
-    /* Tombol */
     .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      height: 44px; padding: 0 20px; border-radius: 10px;
+      display: inline-flex; align-items: center; justify-content: center;
+      height: 42px; padding: 0 18px; border-radius: 8px;
       font-size: 15px; font-weight: 600; border: 1px solid transparent;
-      transition: transform 180ms ease, background-color 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+      transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
     }
-    .btn:active { transform: translateY(1px) scale(0.99); }
-    .btn-primary { background: var(--accent); color: var(--on-accent); box-shadow: 0 8px 22px -10px rgba(43, 123, 196, 0.7); }
-    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
-    .btn-ghost { border-color: var(--line); color: var(--fg); background: var(--surface); }
-    .btn-ghost:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .btn-primary { background: var(--accent); color: var(--on-accent); }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-line { border-color: var(--line); color: var(--fg); }
+    .btn-line:hover { border-color: var(--accent); color: var(--accent); }
 
-    /* Navigasi */
-    .site-header {
-      position: sticky; top: 0; z-index: 50;
-      background: color-mix(in srgb, var(--bg) 88%, transparent);
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid transparent;
-      transition: border-color 220ms ease, box-shadow 220ms ease;
-    }
-    .site-header.is-scrolled { border-color: var(--line); box-shadow: 0 10px 30px -22px rgba(20, 48, 90, 0.4); }
-    .nav { display: flex; align-items: center; justify-content: space-between; height: 66px; gap: 16px; }
-    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; }
-    .brand img { width: 30px; height: 30px; object-fit: contain; transition: transform 240ms ease; }
-    .brand:hover img { transform: rotate(-6deg) scale(1.06); }
+    /* Header */
+    .site-header { position: sticky; top: 0; z-index: 50; background: var(--bg); border-bottom: 1px solid var(--line); }
+    .nav { display: flex; align-items: center; justify-content: space-between; height: 60px; gap: 16px; }
+    .brand { display: flex; align-items: center; gap: 9px; font-weight: 650; font-size: 16px; }
+    .brand img { width: 28px; height: 28px; object-fit: contain; }
     .nav-links { display: flex; align-items: center; gap: 4px; }
-    .nav-links a { padding: 8px 12px; border-radius: 8px; color: var(--muted); font-size: 15px; font-weight: 500; transition: color 160ms ease, background-color 160ms ease; }
-    .nav-links a:hover { color: var(--fg); background: var(--surface); }
-    @media (max-width: 640px) { .nav-links a:not(.btn) { display: none; } }
-    .nav-links a.btn-primary { color: var(--on-accent); background: var(--accent); }
-    .nav-links a.btn-primary:hover { color: var(--on-accent); background: var(--accent-hover); }
+    .nav-links a:not(.btn) { padding: 8px 12px; border-radius: 8px; color: var(--muted); font-size: 15px; transition: color 160ms ease; }
+    .nav-links a:not(.btn):hover { color: var(--fg); }
+    .nav-links .btn { height: 36px; padding: 0 14px; font-size: 14px; margin-left: 6px; }
+    @media (max-width: 560px) { .nav-links a:not(.btn) { display: none; } }
 
     /* Hero */
-    .hero { padding-top: 64px; padding-bottom: 56px; position: relative; overflow: hidden; }
-    .hero::before {
-      content: ""; position: absolute; inset: -30% -10% auto -10%; height: 520px; pointer-events: none; z-index: -1;
-      background:
-        radial-gradient(ellipse 50% 60% at 18% 30%, rgba(43, 123, 196, 0.13), transparent 70%),
-        radial-gradient(ellipse 40% 50% at 82% 20%, rgba(47, 182, 201, 0.12), transparent 70%),
-        radial-gradient(ellipse 30% 40% at 70% 60%, rgba(108, 192, 74, 0.08), transparent 70%);
-      animation: drift 16s ease-in-out infinite alternate;
-    }
-    @keyframes drift { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(14px, 10px, 0); } }
-    .hero-grid { display: grid; gap: 48px; align-items: center; }
-    @media (min-width: 920px) { .hero-grid { grid-template-columns: 1fr 1.05fr; } .hero { padding-top: 96px; } }
-    .hero h1 { margin-top: 18px; font-size: clamp(36px, 5.6vw, 58px); line-height: 1.06; font-weight: 700; letter-spacing: -0.035em; text-wrap: balance; color: var(--navy); }
-    :root[data-theme="dark"] .hero h1, :root:not([data-theme="light"]) .hero h1 { color: var(--fg); }
-    .hero h1 .hl { background: linear-gradient(90deg, var(--blue), var(--teal) 55%, var(--green)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-    .hero-lead { margin-top: 20px; color: var(--muted); font-size: 18px; max-width: 46ch; text-wrap: pretty; }
-    .hero-actions { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 12px; }
-    .hero-chips { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 8px; }
-    .chip { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; color: var(--muted); }
-    .chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--c, var(--teal)); }
+    .hero { padding-top: 64px; padding-bottom: 56px; }
+    @media (min-width: 900px) { .hero { padding-top: 88px; } .hero-grid { grid-template-columns: 1fr 1fr; } }
+    .hero-grid { display: grid; gap: 44px; align-items: center; }
+    .hero h1 { margin-top: 14px; font-size: clamp(34px, 5vw, 50px); line-height: 1.1; font-weight: 700; letter-spacing: -0.03em; text-wrap: balance; color: var(--navy); }
+    :root:not([data-theme="light"]) .hero h1 { color: var(--fg); }
+    .hero .lead { font-size: 18px; margin-top: 18px; }
+    .hero-actions { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 10px; }
 
-    /* Pratinjau dashboard (animasi seperti dashboard SCHID) */
-    .preview { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
-    .preview-bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--surface-2); }
-    .preview-bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
-    .preview-bar i:nth-child(1) { background: var(--orange); }
-    .preview-bar i:nth-child(2) { background: var(--teal); }
-    .preview-bar i:nth-child(3) { background: var(--green); }
-    .preview-bar span { margin-left: 8px; font-size: 13px; color: var(--muted); }
-    .preview-body { padding: 18px; display: grid; gap: 12px; }
-    .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .stat { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
-    .stat small { color: var(--muted); font-size: 12px; }
-    .stat b { display: block; margin-top: 4px; font-size: 22px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
-    .stat em { font-style: normal; font-size: 12px; font-weight: 600; color: var(--green); }
-    .bars { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
-    .bars-head { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
-    .bars-chart { margin-top: 14px; height: 120px; display: flex; align-items: flex-end; gap: 10px; }
-    .bar { flex: 1; border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg, var(--blue), var(--navy)); transform-origin: bottom; transform: scaleY(0); }
-    .bar:nth-child(even) { background: linear-gradient(180deg, var(--teal), var(--blue)); }
-    .progress-list { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 12px; }
-    .progress-row { display: grid; gap: 6px; }
-    .progress-row div { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
-    .track { height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
-    .fill { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--teal), var(--green)); transition: width 1400ms cubic-bezier(0.22, 1, 0.36, 1); }
-    .fill.blue { background: linear-gradient(90deg, var(--blue), var(--teal)); }
-    .fill.orange { background: linear-gradient(90deg, var(--orange), #ffc978); }
-    .is-in .bar { animation: grow 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-    .is-in .bar:nth-child(1) { animation-delay: 60ms; }
-    .is-in .bar:nth-child(2) { animation-delay: 140ms; }
-    .is-in .bar:nth-child(3) { animation-delay: 220ms; }
-    .is-in .bar:nth-child(4) { animation-delay: 300ms; }
-    .is-in .bar:nth-child(5) { animation-delay: 380ms; }
-    .is-in .bar:nth-child(6) { animation-delay: 460ms; }
-    .is-in .bar:nth-child(7) { animation-delay: 540ms; }
-    @keyframes grow { to { transform: scaleY(1); } }
+    /* Pratinjau dashboard: kotak sederhana, tanpa efek */
+    .preview { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+    .preview-head { padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; }
+    .preview-stats { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); background: var(--bg); }
+    .preview-stats div { padding: 14px; border-right: 1px solid var(--line); }
+    .preview-stats div:last-child { border-right: 0; }
+    .preview-stats small { color: var(--muted); font-size: 12px; }
+    .preview-stats b { display: block; margin-top: 2px; font-size: 22px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+    .preview-body { padding: 14px; background: var(--bg); }
+    .preview-body .row { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    .track { height: 6px; border-radius: 99px; background: var(--surface); overflow: hidden; margin-bottom: 14px; }
+    .fill { height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width 1000ms ease-out; }
+    .fill.green { background: var(--green); }
+    .fill.orange { background: var(--orange); }
     .is-in .fill { width: var(--w); }
+    .preview-caption { padding: 10px 14px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); }
 
-    /* Kartu (gaya kartu dashboard: batas tipis, lift saat hover) */
-    .grid { display: grid; gap: 14px; }
-    @media (min-width: 640px) { .grid-2 { grid-template-columns: repeat(2, 1fr); gap: 16px; } }
-    @media (min-width: 960px) { .grid-3 { grid-template-columns: repeat(3, 1fr); } .grid-4 { grid-template-columns: repeat(4, 1fr); } }
-    .card {
-      background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px;
-      transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1), border-color 240ms ease, box-shadow 240ms ease;
-    }
-    .card:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); box-shadow: var(--shadow); }
-    .icon { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; margin-bottom: 14px; transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1); }
-    .card:hover .icon { transform: scale(1.08) rotate(-4deg); }
-    .icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-    .i-blue { color: var(--blue); background: rgba(43, 123, 196, 0.12); }
-    .i-teal { color: #1f97a8; background: rgba(47, 182, 201, 0.14); }
-    .i-green { color: #3f8f22; background: rgba(108, 192, 74, 0.16); }
-    .i-orange { color: #b96f0c; background: rgba(245, 160, 58, 0.18); }
-    .i-navy { color: var(--navy); background: rgba(20, 48, 90, 0.10); }
-    :root:not([data-theme="light"]) .i-navy { color: #b7cbe6; background: rgba(183, 203, 230, 0.12); }
-    @media (prefers-color-scheme: dark) { .i-teal { color: #5fd0df; } .i-green { color: #9ddc7c; } .i-orange { color: #ffc978; } }
-    .card h3 { font-size: 17px; font-weight: 650; letter-spacing: -0.01em; }
-    .card p { margin-top: 6px; color: var(--muted); font-size: 15px; text-wrap: pretty; }
+    /* Daftar modul: satu kolom per baris, dipisah garis */
+    .modules { margin-top: 36px; border-top: 1px solid var(--line); }
+    .module { display: grid; gap: 4px; padding: 20px 0; border-bottom: 1px solid var(--line); }
+    @media (min-width: 720px) { .module { grid-template-columns: 220px 1fr; gap: 24px; } }
+    .module h3 { font-size: 16px; font-weight: 600; }
+    .module p { color: var(--muted); font-size: 15px; text-wrap: pretty; }
 
-    /* Cakupan lembaga */
-    .level { position: relative; overflow: hidden; }
-    .level::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--c); transform: scaleX(0); transform-origin: left; transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1); }
-    .level:hover::after { transform: scaleX(1); }
-    .level .tag { display: inline-block; margin-top: 14px; font-size: 13px; font-weight: 600; color: var(--c); }
+    /* Jenjang */
+    .levels { margin-top: 36px; display: grid; gap: 0; }
+    @media (min-width: 720px) { .levels { grid-template-columns: repeat(3, 1fr); gap: 28px; } }
+    .level { padding: 20px 0; border-top: 2px solid var(--line); }
+    .level h3 { font-size: 16px; font-weight: 600; }
+    .level p { margin-top: 6px; color: var(--muted); font-size: 15px; text-wrap: pretty; }
 
-    /* Cara kerja */
-    .steps { counter-reset: step; display: grid; gap: 14px; }
-    .step { display: grid; grid-template-columns: 44px 1fr; gap: 16px; align-items: start; padding: 20px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1), border-color 240ms ease; }
-    .step:hover { transform: translateX(4px); border-color: color-mix(in srgb, var(--green) 50%, var(--line)); }
-    .step-num { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--blue), var(--teal)); box-shadow: 0 8px 20px -10px rgba(43, 123, 196, 0.8); }
-    .step:nth-child(2) .step-num { background: linear-gradient(135deg, var(--teal), var(--green)); }
-    .step:nth-child(3) .step-num { background: linear-gradient(135deg, var(--green), var(--orange)); }
-    .step h3 { font-size: 17px; font-weight: 650; }
-    .step p { margin-top: 4px; color: var(--muted); font-size: 15px; }
-    .roles { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 8px; }
-    .role { padding: 7px 14px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); font-size: 14px; font-weight: 500; transition: transform 180ms ease, border-color 180ms ease; }
-    .role:hover { transform: translateY(-2px); border-color: var(--accent); }
+    /* Langkah */
+    .steps { margin-top: 36px; list-style: none; padding: 0; display: grid; gap: 22px; counter-reset: s; }
+    .steps li { display: grid; grid-template-columns: 32px 1fr; gap: 14px; }
+    .steps .n { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; font-size: 14px; font-weight: 600; color: var(--accent); }
+    .steps h3 { font-size: 16px; font-weight: 600; margin-top: 3px; }
+    .steps p { margin-top: 4px; color: var(--muted); font-size: 15px; text-wrap: pretty; }
+    .roles { margin-top: 26px; font-size: 14px; color: var(--muted); }
 
-    /* CTA */
-    .cta { background: var(--navy); color: #eaf2fb; border-radius: 22px; padding: 44px 28px; position: relative; overflow: hidden; }
-    @media (min-width: 720px) { .cta { padding: 56px 52px; } }
-    .cta::before, .cta::after { content: ""; position: absolute; border-radius: 50%; filter: blur(30px); opacity: 0.55; pointer-events: none; }
-    .cta::before { width: 280px; height: 280px; right: -60px; top: -90px; background: var(--teal); animation: drift 12s ease-in-out infinite alternate; }
-    .cta::after { width: 240px; height: 240px; left: -70px; bottom: -110px; background: var(--orange); animation: drift 14s ease-in-out infinite alternate-reverse; }
-    .cta h2 { position: relative; font-size: clamp(26px, 4vw, 36px); font-weight: 700; letter-spacing: -0.02em; text-wrap: balance; }
-    .cta p { position: relative; margin-top: 10px; color: #b7cbe6; font-size: 17px; max-width: 52ch; }
-    .cta .actions { position: relative; margin-top: 26px; display: flex; flex-wrap: wrap; gap: 12px; }
-    .cta .btn-primary { background: var(--teal); color: var(--navy); box-shadow: none; }
-    .cta .btn-primary:hover { background: #5fd0df; }
-    .cta .btn-ghost { background: transparent; color: #eaf2fb; border-color: rgba(234, 242, 251, 0.3); }
-    .cta .btn-ghost:hover { border-color: #eaf2fb; }
+    /* Penutup */
+    .closing { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; }
+    .closing p { color: var(--muted); margin-top: 6px; }
 
-    footer { border-top: 1px solid var(--line); padding-block: 28px; color: var(--muted); font-size: 14px; }
-    footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center; }
-    .dots { display: inline-flex; gap: 6px; vertical-align: middle; margin-left: 4px; }
-    .dots i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    footer { border-top: 1px solid var(--line); padding-block: 24px; color: var(--muted); font-size: 14px; }
+    footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; }
 
-    /* Animasi masuk saat digulir (seperti kartu dashboard) */
-    .reveal { opacity: 0; transform: translateY(14px); transition: opacity 620ms cubic-bezier(0.22, 1, 0.36, 1), transform 620ms cubic-bezier(0.22, 1, 0.36, 1); transition-delay: var(--d, 0ms); }
+    /* Kemunculan halus saat digulir */
+    .reveal { opacity: 0; transform: translateY(10px); transition: opacity 500ms ease, transform 500ms ease; }
     .reveal.is-in { opacity: 1; transform: none; }
-    .hero .hero-in { animation: rise 680ms cubic-bezier(0.22, 1, 0.36, 1) both; }
-    .hero .hero-in:nth-child(2) { animation-delay: 80ms; }
-    .hero .hero-in:nth-child(3) { animation-delay: 160ms; }
-    .hero .hero-in:nth-child(4) { animation-delay: 240ms; }
-    @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
-      *, *::before, *::after { animation: none !important; transition: none !important; }
+      *, *::before, *::after { transition: none !important; }
       .reveal { opacity: 1; transform: none; }
-      .bar { transform: scaleY(1); }
       .fill { width: var(--w); }
     }
   </style>
 </head>
 <body>
 
-  <header class="site-header" id="top">
+  <header class="site-header">
     <div class="wrap nav">
-      <a class="brand" href="#top" aria-label="SCHID, beranda">
-        <img src="/app/logo-mark.png" alt="" width="30" height="30">
+      <a class="brand" href="#top" id="top">
+        <img src="/app/logo-mark.png" alt="" width="28" height="28">
         <span>SCHID</span>
       </a>
       <nav class="nav-links" aria-label="Navigasi utama">
-        <a href="#fitur">Fitur</a>
-        <a href="#lembaga">Lembaga</a>
-        <a href="#cara-kerja">Cara kerja</a>
-        <a class="btn btn-primary" href="/app/login" style="height:38px;padding:0 16px;font-size:14px">Masuk</a>
+        <a href="#modul">Modul</a>
+        <a href="#jenjang">Jenjang</a>
+        <a href="#langkah">Cara memulai</a>
+        <a class="btn btn-primary" href="/app/login">Masuk</a>
       </nav>
     </div>
   </header>
 
   <main>
-    <!-- Hero dengan pratinjau dashboard -->
     <section class="hero">
       <div class="wrap hero-grid">
         <div>
-          <span class="eyebrow hero-in">Manajemen sekolah dan lembaga belajar</span>
-          <h1 class="hero-in">Satu aplikasi untuk <span class="hl">sekolah, PKBM, PAUD, dan TK.</span></h1>
-          <p class="hero-lead hero-in">Akademik, absensi, jurnal, nilai, raport, pembelajaran daring, dan ujian. Admin, guru, siswa, dan orang tua bekerja di tempat yang sama.</p>
-          <div class="hero-actions hero-in">
-            <a class="btn btn-primary" href="/app/login">Mulai sekarang</a>
-            <a class="btn btn-ghost" href="#fitur">Lihat fitur</a>
-          </div>
-          <div class="hero-chips hero-in">
-            <span class="chip" style="--c: var(--blue)">Multi-sekolah</span>
-            <span class="chip" style="--c: var(--green)">Bahasa Indonesia</span>
-            <span class="chip" style="--c: var(--orange)">Berjalan di browser</span>
+          <h1>Aplikasi untuk mengelola sekolah, PKBM, PAUD, dan TK.</h1>
+          <p class="lead">Data siswa, kelas, absensi, jurnal, nilai, dan raport dicatat sekali dan dipakai bersama oleh admin, guru, siswa, dan orang tua.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="/app/login">Masuk ke aplikasi</a>
+            <a class="btn btn-line" href="#modul">Lihat modul</a>
           </div>
         </div>
 
-        <div class="preview hero-in" aria-hidden="true" id="preview">
-          <div class="preview-bar"><i></i><i></i><i></i><span>Ringkasan sekolah</span></div>
+        <div class="preview reveal" id="preview" aria-label="Contoh tampilan dashboard dengan data demo">
+          <div class="preview-head"><span>Ringkasan sekolah</span><span>Data demo</span></div>
+          <div class="preview-stats">
+            <div><small>Siswa aktif</small><b>80</b></div>
+            <div><small>Kelas</small><b>4</b></div>
+            <div><small>Kehadiran hari ini</small><b>92%</b></div>
+          </div>
           <div class="preview-body">
-            <div class="stat-row">
-              <div class="stat"><small>Siswa aktif</small><b data-count="80">0</b><em>+4 vs semester lalu</em></div>
-              <div class="stat"><small>Kelas aktif</small><b data-count="4">0</b><em>Tahun ajaran aktif</em></div>
-              <div class="stat"><small>Kehadiran</small><b><span data-count="92" data-suffix="%">0</span></b><em>Hari ini</em></div>
-            </div>
-            <div class="bars">
-              <div class="bars-head"><span>Tren kehadiran, 7 hari</span><span>Persen hadir</span></div>
-              <div class="bars-chart">
-                <div class="bar" style="height:86%"></div>
-                <div class="bar" style="height:90%"></div>
-                <div class="bar" style="height:88%"></div>
-                <div class="bar" style="height:93%"></div>
-                <div class="bar" style="height:91%"></div>
-                <div class="bar" style="height:95%"></div>
-                <div class="bar" style="height:92%"></div>
-              </div>
-            </div>
-            <div class="progress-list">
-              <div class="progress-row"><div><span>Bab 1 · Pecahan</span><span>100%</span></div><div class="track"><div class="fill" style="--w:100%"></div></div></div>
-              <div class="progress-row"><div><span>Jurnal disetujui</span><span>91%</span></div><div class="track"><div class="fill blue" style="--w:91%"></div></div></div>
-              <div class="progress-row"><div><span>Tugas dinilai</span><span>64%</span></div><div class="track"><div class="fill orange" style="--w:64%"></div></div></div>
-            </div>
+            <div class="row"><span>Bab 1 · Pecahan</span><span>100%</span></div>
+            <div class="track"><div class="fill green" style="--w:100%"></div></div>
+            <div class="row"><span>Jurnal disetujui</span><span>91%</span></div>
+            <div class="track"><div class="fill" style="--w:91%"></div></div>
+            <div class="row"><span>Tugas dinilai</span><span>64%</span></div>
+            <div class="track"><div class="fill orange" style="--w:64%"></div></div>
           </div>
+          <div class="preview-caption">Contoh tampilan dengan data demo.</div>
         </div>
       </div>
     </section>
 
-    <!-- Fitur -->
-    <section id="fitur" style="border-top:1px solid var(--line)">
+    <section id="modul" class="border-t-line">
       <div class="wrap">
-        <div class="reveal"><span class="eyebrow">Fitur</span></div>
-        <h2 class="section-title reveal" style="margin-top:14px">Semua yang dibutuhkan lembaga pendidikan, dalam satu aplikasi.</h2>
-        <p class="section-lead reveal">Setiap modul terhubung. Nilai yang diinput guru langsung masuk ke raport, dan absensi langsung terlihat di dashboard.</p>
+        <p class="label">Modul</p>
+        <h2 class="h2" style="margin-top:8px">Apa saja yang ada di dalam SCHID</h2>
+        <p class="lead">Modul-modulnya saling terhubung. Nilai yang diinput guru masuk ke raport, dan absensi langsung muncul di dashboard.</p>
 
-        <div class="grid grid-3" style="margin-top:40px">
-          <article class="card reveal"><div class="icon i-blue"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div><h3>Akademik</h3><p>Tahun ajaran, semester, kelas, rombel, mapel, penugasan guru, dan jadwal dengan cek bentrok.</p></article>
-          <article class="card reveal" style="--d:60ms"><div class="icon i-teal"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><h3>Absensi</h3><p>Harian oleh wali kelas dan per mapel oleh guru pengampu, dengan rekap dan tren otomatis.</p></article>
-          <article class="card reveal" style="--d:120ms"><div class="icon i-green"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div><h3>Jurnal mengajar</h3><p>Guru mencatat jurnal per jam pelajaran. Kepala sekolah menyetujui, dan hanya jurnal yang disetujui masuk laporan.</p></article>
-          <article class="card reveal"><div class="icon i-orange"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></div><h3>Nilai dan raport</h3><p>Komponen nilai berbobot, KKM atau KKTP, predikat, sikap, dan ekstrakurikuler. Raport PDF bisa diunduh siswa.</p></article>
-          <article class="card reveal" style="--d:60ms"><div class="icon i-navy"><svg viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></div><h3>Cetak massal</h3><p>Cetak raport satu kelas sekaligus dalam antrean. Hasilnya diunduh sebagai satu berkas ZIP.</p></article>
-          <article class="card reveal" style="--d:120ms"><div class="icon i-green"><svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div><h3>Kenaikan dan kelulusan</h3><p>Proses kenaikan kelas dengan riwayat. Siswa lulus mendapat sertifikat bernomor unik.</p></article>
-          <article class="card reveal"><div class="icon i-blue"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><h3>Ruang kelas</h3><p>Materi, tugas, pengumuman, dan forum diskusi per materi. Tugas terlambat ditandai, tidak diblokir.</p></article>
-          <article class="card reveal" style="--d:60ms"><div class="icon i-teal"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div><h3>Pembelajaran</h3><p>Video YouTube dan PDF dalam satu urutan. Progres tercatat per halaman dan per video.</p></article>
-          <article class="card reveal" style="--d:120ms"><div class="icon i-orange"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><h3>Ujian</h3><p>Bank soal, jadwal ujian, token acak, waktu di server, pengawasan sesi, dan analisis butir soal.</p></article>
-          <article class="card reveal"><div class="icon i-navy"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><h3>Portal siswa dan orang tua</h3><p>Nilai, absensi, tugas, dan raport dari akun masing-masing.</p></article>
+        <div class="modules">
+          <div class="module reveal"><h3>Akademik</h3><p>Tahun ajaran, semester, kelas, rombel, mapel, penugasan guru, dan jadwal. Jadwal yang bentrok ditolak saat disimpan.</p></div>
+          <div class="module reveal"><h3>Absensi</h3><p>Wali kelas mencatat absensi harian. Guru mencatat absensi per mapel. Rekap dan tren dihitung otomatis.</p></div>
+          <div class="module reveal"><h3>Jurnal mengajar</h3><p>Guru mencatat materi per jam pelajaran. Kepala sekolah menyetujui atau mengembalikan dengan catatan. Hanya jurnal yang disetujui masuk ke laporan.</p></div>
+          <div class="module reveal"><h3>Nilai dan raport</h3><p>Komponen nilai dengan bobot, KKM atau KKTP, predikat, sikap, dan ekstrakurikuler. Raport bisa diunduh siswa dalam bentuk PDF.</p></div>
+          <div class="module reveal"><h3>Cetak massal</h3><p>Cetak raport satu kelas sekaligus. Berkas hasilnya diunduh dalam satu ZIP.</p></div>
+          <div class="module reveal"><h3>Kenaikan dan kelulusan</h3><p>Keputusan naik, tinggal, atau lulus dicatat per siswa dan disimpan sebagai riwayat. Siswa yang lulus mendapat sertifikat dengan nomor unik.</p></div>
+          <div class="module reveal"><h3>Ruang kelas</h3><p>Materi, tugas, pengumuman, dan forum diskusi per materi. Tugas yang terlambat ditandai, tetapi tetap bisa dikumpulkan.</p></div>
+          <div class="module reveal"><h3>Pembelajaran</h3><p>Video YouTube dan berkas PDF disusun dalam satu urutan. Progres dicatat per halaman PDF dan per video.</p></div>
+          <div class="module reveal"><h3>Ujian</h3><p>Bank soal, jadwal ujian, token, waktu yang dihitung di server, dan analisis butir soal.</p></div>
+          <div class="module reveal"><h3>Portal siswa dan orang tua</h3><p>Nilai, absensi, tugas, dan raport dilihat dari akun masing-masing.</p></div>
         </div>
       </div>
     </section>
 
-    <!-- Cakupan lembaga -->
-    <section id="lembaga" style="background:var(--surface);border-block:1px solid var(--line)">
+    <section id="jenjang" class="border-t-line">
       <div class="wrap">
-        <div class="reveal"><span class="eyebrow">Cakupan lembaga</span></div>
-        <h2 class="section-title reveal" style="margin-top:14px">Satu sistem untuk setiap jenjang.</h2>
-        <p class="section-lead reveal">Istilah dan pengaturan menyesuaikan jenis lembaga. Di PKBM, peserta disebut warga belajar dan kelas disebut rombel.</p>
-        <div class="grid grid-3" style="margin-top:40px">
-          <article class="card level reveal" style="--c:var(--green)"><h3>TK dan PAUD</h3><p>Peserta didik, kelas, dan penilaian perkembangan sesuai aturan lembaga.</p><span class="tag">Peserta didik · Kelas</span></article>
-          <article class="card level reveal" style="--c:var(--blue);--d:60ms"><h3>SD, SMP, dan SMA</h3><p>Siswa, kelas, mapel, nilai semester, kenaikan kelas, dan kelulusan.</p><span class="tag">Siswa · Kelas · Mapel</span></article>
-          <article class="card level reveal" style="--c:var(--orange);--d:120ms"><h3>PKBM</h3><p>Warga belajar, rombel, paket A, B, C, jurnal mengajar, dan sertifikat bernomor.</p><span class="tag">Warga belajar · Paket A/B/C</span></article>
+        <p class="label">Jenjang</p>
+        <h2 class="h2" style="margin-top:8px">Satu aplikasi untuk semua jenis lembaga</h2>
+        <p class="lead">Istilah di aplikasi menyesuaikan jenis lembaga. Di PKBM, peserta disebut warga belajar dan kelas disebut rombel.</p>
+
+        <div class="levels">
+          <div class="level reveal"><h3>TK dan PAUD</h3><p>Peserta didik, kelas, dan penilaian perkembangan sesuai aturan lembaga.</p></div>
+          <div class="level reveal"><h3>SD, SMP, dan SMA</h3><p>Siswa, kelas, mapel, nilai semester, kenaikan kelas, dan kelulusan.</p></div>
+          <div class="level reveal"><h3>PKBM</h3><p>Warga belajar, rombel, paket A, B, dan C, jurnal mengajar, dan sertifikat bernomor.</p></div>
         </div>
       </div>
     </section>
 
-    <!-- Cara kerja -->
-    <section id="cara-kerja">
-      <div class="wrap" style="display:grid;gap:40px">
-        <div>
-          <div class="reveal"><span class="eyebrow">Cara kerja</span></div>
-          <h2 class="section-title reveal" style="margin-top:14px">Tiga langkah untuk mulai.</h2>
-          <div class="roles reveal">
-            <span class="role">Admin</span><span class="role">Kepala sekolah</span><span class="role">Guru</span><span class="role">Wali kelas</span><span class="role">Siswa</span><span class="role">Orang tua</span>
-          </div>
-        </div>
+    <section id="langkah" class="border-t-line">
+      <div class="wrap">
+        <p class="label">Cara memulai</p>
+        <h2 class="h2" style="margin-top:8px">Tiga langkah dari kosong sampai dipakai</h2>
+
         <ol class="steps">
-          <li class="step reveal"><span class="step-num">1</span><div><h3>Admin menyiapkan lembaga</h3><p>Tahun ajaran, kelas, mapel, dan akun guru. Format raport diatur sesuai aturan lembaga.</p></div></li>
-          <li class="step reveal" style="--d:80ms"><span class="step-num">2</span><div><h3>Guru mengajar dan mencatat</h3><p>Jadwal, absensi, jurnal, materi, tugas, dan nilai dicatat sekali di tempat yang sama.</p></div></li>
-          <li class="step reveal" style="--d:160ms"><span class="step-num">3</span><div><h3>Siswa dan orang tua melihat hasilnya</h3><p>Siswa mengerjakan pembelajaran dan ujian, lalu mengunduh raportnya sendiri.</p></div></li>
+          <li class="reveal"><span class="n">1</span><div><h3>Admin menyiapkan lembaga</h3><p>Tahun ajaran, kelas, mapel, dan akun guru. Format raport diatur sesuai aturan lembaga.</p></div></li>
+          <li class="reveal"><span class="n">2</span><div><h3>Guru mengajar dan mencatat</h3><p>Jadwal, absensi, jurnal, materi, tugas, dan nilai dicatat di satu tempat yang sama.</p></div></li>
+          <li class="reveal"><span class="n">3</span><div><h3>Siswa dan orang tua melihat hasilnya</h3><p>Siswa mengerjakan pembelajaran dan ujian, lalu mengunduh raportnya sendiri.</p></div></li>
         </ol>
+        <p class="roles">Peran: admin, kepala sekolah, guru, wali kelas, siswa, dan orang tua.</p>
       </div>
     </section>
 
-    <!-- CTA -->
-    <section style="padding-top:0">
-      <div class="wrap">
-        <div class="cta reveal">
-          <h2>Siap dipakai di lembaga Anda?</h2>
-          <p>Mulai dengan satu lembaga. Tambah modul sesuai kebutuhan.</p>
-          <div class="actions">
-            <a class="btn btn-primary" href="/app/login">Mulai sekarang</a>
-            <a class="btn btn-ghost" href="#fitur">Lihat fitur</a>
-          </div>
+    <section class="border-t-line">
+      <div class="wrap closing">
+        <div>
+          <h2 class="h2">Mulai dengan satu lembaga</h2>
+          <p>Tambah modul sesuai kebutuhan. Akun admin dibuat oleh tim SCHID.</p>
         </div>
+        <a class="btn btn-primary" href="/app/login">Masuk ke aplikasi</a>
       </div>
     </section>
   </main>
@@ -409,60 +283,24 @@
   <footer>
     <div class="wrap">
       <span>© 2026 SCHID</span>
-      <span>Rust · React · MySQL 8.4
-        <span class="dots" aria-hidden="true"><i style="background:var(--navy)"></i><i style="background:var(--blue)"></i><i style="background:var(--teal)"></i><i style="background:var(--green)"></i><i style="background:var(--orange)"></i></span>
-      </span>
+      <span>Dibangun dengan Rust, React, dan MySQL</span>
     </div>
   </footer>
 
   <script>
     (function () {
       var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-      // Header berbayang saat digulir
-      var header = document.querySelector('.site-header');
-      function onScroll() { header.classList.toggle('is-scrolled', window.scrollY > 8); }
-      window.addEventListener('scroll', onScroll, { passive: true });
-      onScroll();
-
-      // Animasi kemunculan saat elemen masuk layar
-      var revealEls = document.querySelectorAll('.reveal');
-      if (!reduce && 'IntersectionObserver' in window) {
-        var io = new IntersectionObserver(function (entries) {
-          entries.forEach(function (e) {
-            if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
-          });
-        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-        revealEls.forEach(function (el) { io.observe(el); });
-      } else {
-        revealEls.forEach(function (el) { el.classList.add('is-in'); });
-      }
-
-      // Pratinjau: bilah dan progres mulai terisi saat terlihat
-      var preview = document.getElementById('preview');
-      function animatePreview() {
-        preview.classList.add('is-in');
-        preview.querySelectorAll('[data-count]').forEach(function (el) {
-          var target = Number(el.getAttribute('data-count'));
-          var suffix = el.getAttribute('data-suffix') || '';
-          if (reduce) { el.textContent = target + suffix; return; }
-          var start = performance.now(), dur = 900;
-          (function tick(now) {
-            var t = Math.min((now - start) / dur, 1);
-            var eased = 1 - Math.pow(1 - t, 3);
-            el.textContent = Math.round(target * eased) + suffix;
-            if (t < 1) requestAnimationFrame(tick);
-          })(start);
-        });
-      }
+      var els = document.querySelectorAll('.reveal');
       if (reduce || !('IntersectionObserver' in window)) {
-        animatePreview();
-      } else {
-        var po = new IntersectionObserver(function (entries) {
-          entries.forEach(function (e) { if (e.isIntersecting) { animatePreview(); po.disconnect(); } });
-        }, { threshold: 0.2 });
-        po.observe(preview);
+        els.forEach(function (el) { el.classList.add('is-in'); });
+        return;
       }
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
+        });
+      }, { threshold: 0.12 });
+      els.forEach(function (el) { io.observe(el); });
     })();
   </script>
 </body>
