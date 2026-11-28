@@ -16,3 +16,6 @@ e2e/*.png
 put1.json
 bad.json
 apps/web/*.tsbuildinfo
+
+# Cache Python
+__pycache__/
