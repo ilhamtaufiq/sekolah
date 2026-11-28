@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { CalendarClock, CheckCircle2, GraduationCap, PlayCircle } from "lucide-react";
 import { PageHeader } from "../../components/kit";
-import { Button } from "@/components/ui/button";
+import { Button } from "../../components/kit";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "../../lib/auth";
@@ -56,7 +56,7 @@ export function StudentDashboard() {
               ))}
             </ul>
             <div className="mt-4">
-              <Button size="sm" variant="outline" nativeButton={false} render={<Link to="/ruang-kelas" />}>
+              <Button size="sm" variant="outline" render={<Link to="/ruang-kelas" />}>
                 Buka ruang kelas
               </Button>
             </div>

@@ -3,7 +3,7 @@ import { CalendarCheck, GraduationCap, School, Users } from "lucide-react";
 import { Bar, BarChart, Cell, CartesianGrid, Pie, PieChart, XAxis, YAxis } from "recharts";
 import { EmptyState, PageHeader } from "../../components/kit";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button } from "../../components/kit";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { useApiQuery } from "../../lib/hooks";
@@ -130,7 +130,7 @@ export function DashboardPage() {
                   <span className="block text-sm font-medium">{t.label}</span>
                   <span className="block text-sm text-muted-foreground">{t.detail}</span>
                 </span>
-                <Button size="sm" nativeButton={false} render={<Link to={t.to} />}>
+                <Button size="sm" render={<Link to={t.to} />}>
                   {t.cta}
                 </Button>
               </li>
@@ -216,7 +216,7 @@ export function DashboardPage() {
                     unit="%"
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="present_rate" fill="var(--color-present_rate)" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  <Bar dataKey="present_rate" fill="var(--primary)" radius={[4, 4, 0, 0]} maxBarSize={40} />
                 </BarChart>
               </ChartContainer>
             )}

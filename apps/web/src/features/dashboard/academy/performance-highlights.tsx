@@ -5,7 +5,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { type ChartConfig, ChartContainer } from "@/components/ui/chart";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
 
 const performanceHighlights = [
   {
@@ -112,8 +112,8 @@ function PerformanceHighlightBar({
             x={avatarX - 2}
             y={avatarY}
           >
-            <Tooltip>
-              <TooltipTrigger
+            <TooltipTrigger>
+              <button
                 aria-label={student.name}
                 className="focus-visible:ring-ring flex size-5 rounded-full outline-none focus-visible:ring-2"
                 type="button"
@@ -121,8 +121,8 @@ function PerformanceHighlightBar({
                 <Avatar className="bg-muted size-5" size="sm">
                   <AvatarFallback className="text-foreground">{student.initials}</AvatarFallback>
                 </Avatar>
-              </TooltipTrigger>
-              <TooltipContent side="top" sideOffset={8}>
+              </button>
+              <Tooltip placement="top" offset={8}>
                 <div className="grid gap-1">
                   <p>{student.name}</p>
                   <p>
@@ -132,8 +132,8 @@ function PerformanceHighlightBar({
                     {payload.className} · {payload.subject}
                   </p>
                 </div>
-              </TooltipContent>
-            </Tooltip>
+              </Tooltip>
+            </TooltipTrigger>
           </foreignObject>
         );
       })}
