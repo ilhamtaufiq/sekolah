@@ -174,6 +174,21 @@ def main():
     print("  wali kelas: wali1@demo.sch.id ... wali4@demo.sch.id")
     print(f"  siswa: siswa{260001}@demo.sch.id ... siswa{nis - 1}@demo.sch.id")
 
+    # Dikembalikan agar skrip lanjutan (seed_demo_lengkap.py) bisa memakai data ini.
+    return {
+        "api": api,
+        "slug": args.slug,
+        "classes": classes,
+        "students_by_class": students_by_class,
+        "assignments": assignments,
+        "subjects": subj,
+        "teachers": teachers,
+        "homerooms": homerooms,
+        "sem1": sem1,
+        "days": days,
+        "start_year": start_year,
+    }
+
 
 if __name__ == "__main__":
     main()
