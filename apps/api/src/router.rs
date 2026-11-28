@@ -298,7 +298,15 @@ pub fn build(state: AppState) -> Router {
         // Dashboard super admin platform (lintas sekolah)
         .route("/api/platform/login", post(platform::login))
         .route("/api/platform/me", get(platform::me))
-        .route("/api/platform/schools", get(platform::schools))
+        .route("/api/platform/schools", get(platform::schools).post(platform::manage::create_school))
+        .route("/api/platform/schools/{id}", get(platform::manage::detail).patch(platform::manage::update))
+        .route("/api/platform/schools/{id}/status", post(platform::manage::set_status))
+        .route("/api/platform/schools/{id}/admins", post(platform::manage::add_admin))
+        .route(
+            "/api/platform/schools/{id}/users/{user_id}/password",
+            post(platform::manage::reset_password),
+        )
+        .route("/api/platform/audit", get(platform::manage::audit_list))
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }

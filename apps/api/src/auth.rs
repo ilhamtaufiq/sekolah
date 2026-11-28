@@ -134,6 +134,16 @@ impl FromRequestParts<AppState> for AuthUser {
             return Err(AppError::Unauthorized);
         }
 
+        // Sekolah yang dinonaktifkan langsung kehilangan akses, termasuk token yang masih berlaku.
+        let active: Option<bool> = sqlx::query_scalar("SELECT is_active FROM schools WHERE id = ?")
+            .bind(claims.sch)
+            .fetch_optional(&state.pool)
+            .await
+            .map_err(|e| AppError::Internal(e.into()))?;
+        if active != Some(true) {
+            return Err(AppError::Forbidden);
+        }
+
         Ok(AuthUser {
             user_id: claims.sub,
             school_id: claims.sch,
@@ -231,6 +241,7 @@ struct LoginRow {
     role: String,
     is_active: bool,
     school_name: String,
+    school_active: bool,
 }
 
 pub async fn login(
@@ -239,7 +250,7 @@ pub async fn login(
 ) -> AppResult<Json<LoginResponse>> {
     let row: Option<LoginRow> = sqlx::query_as(
         "SELECT u.id, u.school_id, u.name, u.email, u.password_hash, u.role, u.is_active, \
-                s.name AS school_name \
+                s.name AS school_name, s.is_active AS school_active \
          FROM users u JOIN schools s ON s.id = u.school_id \
          WHERE s.slug = ? AND lower(u.email) = lower(?)",
     )
@@ -252,6 +263,9 @@ pub async fn login(
     let row = row.ok_or(AppError::Unauthorized)?;
     if !row.is_active || !verify_password(&req.password, &row.password_hash) {
         return Err(AppError::Unauthorized);
+    }
+    if !row.school_active {
+        return Err(AppError::Forbidden);
     }
 
     let role = Role::parse(&row.role)

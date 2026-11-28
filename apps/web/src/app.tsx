@@ -44,6 +44,8 @@ import { KenaikanPage } from "./features/kelulusan/KenaikanPage";
 import { SertifikatSayaPage } from "./features/kelulusan/SertifikatSayaPage";
 import { PlatformLoginPage } from "./features/platform/PlatformLoginPage";
 import { PlatformPage } from "./features/platform/PlatformPage";
+import { PlatformSchoolPage } from "./features/platform/PlatformSchoolPage";
+import { PlatformAuditPage } from "./features/platform/PlatformAuditPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -71,6 +73,22 @@ export function App() {
           element={
             <RequirePlatform>
               <PlatformPage />
+            </RequirePlatform>
+          }
+        />
+        <Route
+          path="/platform/sekolah/:id"
+          element={
+            <RequirePlatform>
+              <PlatformSchoolPage />
+            </RequirePlatform>
+          }
+        />
+        <Route
+          path="/platform/audit"
+          element={
+            <RequirePlatform>
+              <PlatformAuditPage />
             </RequirePlatform>
           }
         />

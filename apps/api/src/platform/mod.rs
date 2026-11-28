@@ -9,6 +9,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+pub mod manage;
+
 use crate::{
     auth::{PlatformUser, Role, verify_password},
     error::{AppError, AppResult},

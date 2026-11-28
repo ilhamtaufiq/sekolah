@@ -13,7 +13,7 @@ export function useApiQuery<T>(key: QueryKey, path: string | null) {
 }
 
 type MutationSpec<TVars> = {
-  method: "POST" | "PUT" | "DELETE";
+  method: "POST" | "PUT" | "PATCH" | "DELETE";
   path: (vars: TVars) => string;
   body?: (vars: TVars) => unknown;
 };
