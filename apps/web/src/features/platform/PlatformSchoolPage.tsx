@@ -3,8 +3,12 @@ import { useParams } from "react-router";
 import { Button, Card, EmptyState, ErrorAlert, Field, Input, PageHeader, Select, StatStrip, Table, TableCell, TableRow } from "../../components/kit";
 import { Badge } from "@/components/ui/badge";
 import { useApiMutation, useApiQuery } from "../../lib/hooks";
+import { useAuth } from "../../lib/auth";
+import { useQueryClient } from "@tanstack/react-query";
 import { PlatformShell } from "./PlatformShell";
 import { AUDIT_LABELS, formatWhen, summarizeDetail, type AuditRow } from "./audit-labels";
+import { seedSchoolDemo } from "./demoSeed";
+import { api } from "../../lib/api";
 
 type SchoolRecord = { id: string; slug: string; name: string; is_active: boolean; created_at: string };
 type UserRecord = { id: string; name: string; email: string; role: string; is_active: boolean };
@@ -79,6 +83,8 @@ export function PlatformSchoolPage() {
       </Card>
 
       <ResetPasswordCard id={id} users={s.users.filter((u) => u.role === "admin")} invalidate={invalidate} />
+
+      <DemoDataCard id={id} slug={s.slug} hasClasses={s.summary.classes > 0} invalidate={invalidate} />
 
       <Card title="Riwayat aksi" description="Semua perubahan yang dilakukan super admin pada sekolah ini.">
         {audit.data && audit.data.length === 0 ? (
@@ -213,6 +219,47 @@ function ResetPasswordCard({ id, users, invalidate }: { id: string; users: UserR
         <Button type="submit" disabled={!userId || reset.isPending}>{reset.isPending ? "Menyimpan…" : "Reset password"}</Button>
         {done && <p className="text-sm text-emerald-700 md:col-span-3">Password berhasil direset.</p>}
       </form>
+    </Card>
+  );
+}
+
+/** Mengisi sekolah kosong dengan data demo. Berjalan di browser dan dicatat di jejak audit. */
+function DemoDataCard({ id, slug, hasClasses, invalidate }: { id: string; slug: string; hasClasses: boolean; invalidate: string[][] }) {
+  const { token: platformToken } = useAuth();
+  const qc = useQueryClient();
+  const [step, setStep] = useState("");
+  const [running, setRunning] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const [finished, setFinished] = useState(false);
+
+  async function run() {
+    if (!window.confirm("Isi data demo ke sekolah ini? Sekolah harus kosong. Proses memakan beberapa menit dan jangan tutup halaman.")) return;
+    setRunning(true);
+    setError(null);
+    setFinished(false);
+    try {
+      // Token admin sekolah hanya dipakai di memori untuk proses ini dan dicatat di jejak audit.
+      const adminSession = await api<{ token: string }>(`/platform/schools/${id}/admin-token`, { method: "POST", token: platformToken });
+      await seedSchoolDemo(adminSession.token, slug, setStep);
+      setFinished(true);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setRunning(false);
+      setStep("");
+      invalidate.forEach((key) => qc.invalidateQueries({ queryKey: key }));
+    }
+  }
+
+  return (
+    <Card title="Data demo" description="Mengisi sekolah kosong dengan siswa, nilai, absensi, jurnal, ujian, dan raport contoh.">
+      <div className="space-y-4">
+        <ErrorAlert error={error} />
+        {finished && <p className="text-sm text-emerald-700">Data demo selesai dibuat. Akun demo memakai password demo-pass-1.</p>}
+        {running && <p className="text-sm text-muted-foreground">Sedang mengerjakan: {step || "persiapan"}…</p>}
+        {hasClasses && !running && <p className="text-sm text-muted-foreground">Sekolah ini sudah punya kelas, jadi data demo tidak bisa diisi.</p>}
+        <Button onClick={run} disabled={running || hasClasses}>{running ? "Memproses…" : "Isi data demo"}</Button>
+      </div>
     </Card>
   );
 }

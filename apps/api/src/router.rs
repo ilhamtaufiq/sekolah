@@ -307,6 +307,7 @@ pub fn build(state: AppState) -> Router {
             post(platform::manage::reset_password),
         )
         .route("/api/platform/audit", get(platform::manage::audit_list))
+        .route("/api/platform/schools/{id}/admin-token", post(platform::manage::admin_token))
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }

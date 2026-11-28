@@ -13,7 +13,7 @@ use sqlx::{FromRow, MySqlConnection};
 use uuid::Uuid;
 
 use crate::{
-    auth::{PlatformUser, hash_password},
+    auth::{PlatformUser, Role, hash_password},
     error::{AppError, AppResult, FieldIssue},
     state::AppState,
 };
@@ -411,4 +411,67 @@ pub async fn audit_list(
     .fetch_all(&st.pool)
     .await?;
     Ok(Json(rows))
+}
+
+// ---------- Token admin sekolah untuk seed data demo ----------
+
+#[derive(Serialize)]
+pub struct AdminTokenResponse {
+    pub token: String,
+    pub user: AdminTokenUser,
+}
+
+#[derive(Serialize)]
+pub struct AdminTokenUser {
+    pub id: Uuid,
+    pub name: String,
+    pub email: String,
+    pub role: String,
+    pub school_id: Uuid,
+    pub school_name: String,
+}
+
+#[derive(FromRow)]
+struct AdminRow {
+    id: Uuid,
+    name: String,
+    email: String,
+}
+
+/// Token untuk admin aktif pertama di sekolah. Dipakai super admin untuk mengisi data demo
+/// dari dashboard. Setiap pemakaiannya dicatat di jejak audit.
+pub async fn admin_token(
+    State(st): State<AppState>,
+    actor: PlatformUser,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<AdminTokenResponse>> {
+    let mut tx = st.pool.begin().await?;
+    let school_name: String = sqlx::query_scalar("SELECT name FROM schools WHERE id = ? AND is_active = TRUE")
+        .bind(id)
+        .fetch_optional(&mut *tx)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    let admin: AdminRow = sqlx::query_as(
+        "SELECT id, name, email FROM users WHERE school_id = ? AND role = 'admin' AND is_active = TRUE \
+         ORDER BY created_at LIMIT 1",
+    )
+    .bind(id)
+    .fetch_optional(&mut *tx)
+    .await?
+    .ok_or(AppError::NotFound)?;
+    audit(&mut tx, actor.user_id, "school.demo_token", Some(id), json!({ "as_user": admin.email })).await?;
+    tx.commit().await?;
+
+    let token = st.keys.issue(admin.id, id, Role::Admin, 1)?;
+    Ok(Json(AdminTokenResponse {
+        token,
+        user: AdminTokenUser {
+            id: admin.id,
+            name: admin.name,
+            email: admin.email,
+            role: Role::Admin.as_str().to_string(),
+            school_id: id,
+            school_name,
+        },
+    }))
 }
