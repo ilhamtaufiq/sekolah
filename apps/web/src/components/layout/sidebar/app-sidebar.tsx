@@ -18,7 +18,6 @@ import { usePreferencesStore } from "@/stores/preferences/preferences-provider";
 
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
-import { SupportCard } from "./support-card";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
@@ -50,7 +49,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={sidebarItemsFor(role)} />
       </SidebarContent>
       <SidebarFooter>
-        <SupportCard />
         <NavUser user={{ name: user?.name ?? "", email: user?.email ?? "", avatar: "" }} />
       </SidebarFooter>
     </Sidebar>

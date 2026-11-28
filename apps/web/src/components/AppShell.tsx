@@ -7,7 +7,6 @@ import { Separator } from "@/components/ui/separator";
 import { Toaster } from "@/components/ui/sonner";
 import { AppSidebar } from "@/components/layout/sidebar/app-sidebar";
 import { AccountSwitcher } from "@/components/layout/header/account-switcher";
-import { GitHubRepositoriesMenu } from "@/components/layout/header/github-repositories-menu";
 import { LayoutControls } from "@/components/layout/header/layout-controls";
 import { SearchDialog } from "@/components/layout/header/search-dialog";
 import { ThemeSwitcher } from "@/components/layout/header/theme-switcher";
@@ -75,7 +74,6 @@ export function AppShell() {
               <div className="flex items-center gap-2">
                 <LayoutControls />
                 <ThemeSwitcher />
-                <GitHubRepositoriesMenu />
                 <AccountSwitcher users={accounts} />
               </div>
             </div>
