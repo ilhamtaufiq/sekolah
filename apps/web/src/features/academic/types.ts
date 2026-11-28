@@ -122,6 +122,8 @@ export const ROLE_LABELS: Record<string, string> = {
   kepala_sekolah: "Kepala sekolah",
   guru: "Guru",
   wali_kelas: "Wali kelas",
+  siswa: "Siswa",
+  orang_tua: "Orang tua",
 };
 
 export const ATTENDANCE_CODES = [

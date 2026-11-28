@@ -85,7 +85,7 @@ const schoolGroups: RoleGroup[] = [
       link("mapel", "Mapel", "/mapel", BookOpen, LEADERSHIP),
       link("kelas", "Kelas", "/kelas", School, STAFF),
       link("siswa", "Siswa", "/siswa", Users, STAFF),
-      link("staf", "Guru & staf", "/staf", GraduationCap, LEADERSHIP),
+      link("pengguna", "Pengguna", "/pengguna", GraduationCap, LEADERSHIP),
       link("jadwal", "Jadwal", "/jadwal", CalendarClock, STAFF),
     ],
   },

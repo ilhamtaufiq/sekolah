@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 
 export type User = {
@@ -48,6 +49,7 @@ function writeStoredSession(value: Session) {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session>(() => readStoredSession());
+  const queryClient = useQueryClient();
 
   const login = useCallback(async (schoolSlug: string, email: string, password: string) => {
     const res = await api<{ token: string; user: User }>("/auth/login", {
@@ -74,8 +76,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     writeStoredSession(null);
+    // Data dari akun sebelumnya dibuang agar tidak terlihat oleh pengguna berikutnya.
+    queryClient.clear();
     setSession(null);
-  }, []);
+  }, [queryClient]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

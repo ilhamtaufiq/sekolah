@@ -105,7 +105,8 @@ export function App() {
           <Route path="kelas" element={<ClassesPage />} />
           <Route path="kelas/:id" element={<ClassDetailPage />} />
           <Route path="siswa" element={<StudentsPage />} />
-          <Route path="staf" element={<StaffPage />} />
+          <Route path="pengguna" element={<StaffPage />} />
+          <Route path="staf" element={<Navigate to="/pengguna" replace />} />
           <Route path="jadwal" element={<SchedulePage />} />
           <Route path="absensi" element={<AttendancePage />} />
           <Route path="nilai" element={<GradesPage />} />

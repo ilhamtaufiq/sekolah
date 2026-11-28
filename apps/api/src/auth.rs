@@ -128,21 +128,35 @@ impl FromRequestParts<AppState> for AuthUser {
             .ok_or(AppError::Unauthorized)?;
 
         let claims = state.keys.verify(token)?;
-        let role = Role::parse(&claims.role).ok_or(AppError::Unauthorized)?;
+        let token_role = Role::parse(&claims.role).ok_or(AppError::Unauthorized)?;
         // Token super admin tidak boleh dipakai di endpoint sekolah.
-        if role == Role::SuperAdmin {
+        if token_role == Role::SuperAdmin {
             return Err(AppError::Unauthorized);
         }
 
+        // Status dan peran dibaca ulang dari database setiap request. Akibatnya, akun yang
+        // dinonaktifkan atau diubah perannya langsung berlaku, termasuk untuk token yang masih hidup.
+        let row: Option<(bool, bool, String)> = sqlx::query_as(
+            "SELECT s.is_active, u.is_active, u.role \
+             FROM users u JOIN schools s ON s.id = u.school_id \
+             WHERE u.id = ? AND u.school_id = ?",
+        )
+        .bind(claims.sub)
+        .bind(claims.sch)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| AppError::Internal(e.into()))?;
+        let Some((school_active, user_active, db_role)) = row else {
+            return Err(AppError::Unauthorized);
+        };
+        if !user_active {
+            return Err(AppError::Unauthorized);
+        }
         // Sekolah yang dinonaktifkan langsung kehilangan akses, termasuk token yang masih berlaku.
-        let active: Option<bool> = sqlx::query_scalar("SELECT is_active FROM schools WHERE id = ?")
-            .bind(claims.sch)
-            .fetch_optional(&state.pool)
-            .await
-            .map_err(|e| AppError::Internal(e.into()))?;
-        if active != Some(true) {
+        if !school_active {
             return Err(AppError::Forbidden);
         }
+        let role = Role::parse(&db_role).ok_or(AppError::Unauthorized)?;
 
         Ok(AuthUser {
             user_id: claims.sub,

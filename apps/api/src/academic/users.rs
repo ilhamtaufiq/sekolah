@@ -1,4 +1,5 @@
-//! Pengelolaan akun guru dan staf oleh admin. Akun siswa dan orang tua menyusul di fase berikutnya.
+//! Pengelolaan akun pengguna sekolah oleh admin: staf, siswa, dan orang tua.
+//! Peran staf bisa diubah; akun siswa dan orang tua hanya bisa diganti nama, diaktifkan, atau direset password.
 
 use axum::{
     Json,
@@ -16,7 +17,7 @@ use crate::{
     validate::Validator,
 };
 
-/// Peran yang bisa dibuat dari menu pengguna. Siswa dan orang tua punya alur sendiri.
+/// Peran yang bisa dibuat dari menu pengguna. Akun siswa dan orang tua dibuat dari menu siswa.
 const STAFF_ROLES: &[&str] = &["admin", "kepala_sekolah", "guru", "wali_kelas"];
 
 #[derive(Serialize, FromRow)]
@@ -58,9 +59,10 @@ pub async fn list(
     require_role(&user, READ_ROLES)?;
     let rows = sqlx::query_as(
         "SELECT id, name, email, role, is_active FROM users \
-         WHERE school_id = ? AND role IN ('admin', 'kepala_sekolah', 'guru', 'wali_kelas') \
+         WHERE school_id = ? \
+           AND role IN ('admin', 'kepala_sekolah', 'guru', 'wali_kelas', 'siswa', 'orang_tua') \
            AND (? IS NULL OR role = ?) \
-         ORDER BY name",
+         ORDER BY role, name",
     )
     .bind(user.school_id)
     .bind(&filter.role)
@@ -131,9 +133,27 @@ pub async fn update(
 ) -> AppResult<Json<StaffUser>> {
     require_role(&user, MASTER_WRITE)?;
 
+    // Peran akun saat ini menentukan batas perubahan peran.
+    let current_role: Option<String> =
+        sqlx::query_scalar("SELECT role FROM users WHERE id = ? AND school_id = ?")
+            .bind(id)
+            .bind(user.school_id)
+            .fetch_optional(&st.pool)
+            .await?;
+    let current_role = current_role.ok_or(AppError::NotFound)?;
+
     let mut v = Validator::new();
     let name = v.text("name", &input.name, 2, 200);
-    let role = validate_role(&mut v, &input.role);
+    let role = if matches!(current_role.as_str(), "siswa" | "orang_tua") {
+        v.require(
+            input.role == current_role,
+            "role",
+            "peran akun siswa dan orang tua tidak bisa diubah dari menu ini",
+        );
+        current_role.clone()
+    } else {
+        validate_role(&mut v, &input.role)
+    };
     if let Some(pw) = &input.password {
         v.require(pw.chars().count() >= 8, "password", "minimal 8 karakter");
     }
