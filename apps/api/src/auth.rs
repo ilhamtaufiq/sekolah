@@ -24,6 +24,8 @@ pub enum Role {
     WaliKelas,
     Siswa,
     OrangTua,
+    /// Akun platform. Tidak terikat sekolah dan tidak bisa memakai endpoint sekolah.
+    SuperAdmin,
 }
 
 impl Role {
@@ -35,6 +37,7 @@ impl Role {
             Role::WaliKelas => "wali_kelas",
             Role::Siswa => "siswa",
             Role::OrangTua => "orang_tua",
+            Role::SuperAdmin => "superadmin",
         }
     }
 
@@ -46,6 +49,7 @@ impl Role {
             "wali_kelas" => Role::WaliKelas,
             "siswa" => Role::Siswa,
             "orang_tua" => Role::OrangTua,
+            "superadmin" => Role::SuperAdmin,
             _ => return None,
         })
     }
@@ -125,12 +129,45 @@ impl FromRequestParts<AppState> for AuthUser {
 
         let claims = state.keys.verify(token)?;
         let role = Role::parse(&claims.role).ok_or(AppError::Unauthorized)?;
+        // Token super admin tidak boleh dipakai di endpoint sekolah.
+        if role == Role::SuperAdmin {
+            return Err(AppError::Unauthorized);
+        }
 
         Ok(AuthUser {
             user_id: claims.sub,
             school_id: claims.sch,
             role,
         })
+    }
+}
+
+/// Pengguna platform (super admin). Dipakai khusus oleh endpoint platform.
+#[derive(Debug, Clone, Copy)]
+pub struct PlatformUser {
+    pub user_id: Uuid,
+}
+
+impl FromRequestParts<AppState> for PlatformUser {
+    type Rejection = AppError;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
+        let header = parts
+            .headers
+            .get(AUTHORIZATION)
+            .and_then(|v| v.to_str().ok())
+            .ok_or(AppError::Unauthorized)?;
+        let token = header
+            .strip_prefix("Bearer ")
+            .ok_or(AppError::Unauthorized)?;
+        let claims = state.keys.verify(token)?;
+        if Role::parse(&claims.role) != Some(Role::SuperAdmin) {
+            return Err(AppError::Forbidden);
+        }
+        Ok(PlatformUser { user_id: claims.sub })
     }
 }
 

@@ -11,6 +11,7 @@ mod health;
 mod jurnal;
 mod kelulusan;
 mod lms;
+mod platform;
 mod report_format;
 mod router;
 mod school_profile;
@@ -57,6 +58,7 @@ async fn main() -> Result<()> {
         }
         Some("create-school") => cli::create_school(&pool, &args[1..]).await,
         Some("create-user") => cli::create_user(&pool, &args[1..]).await,
+        Some("create-platform-admin") => cli::create_platform_admin(&pool, &args[1..]).await,
         Some(other) => bail!("perintah tidak dikenal: {other}"),
     }
 }

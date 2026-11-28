@@ -42,11 +42,21 @@ import { MyReportsPage } from "./features/grades/MyReportsPage";
 import { LessonPage } from "./features/lms/LessonPage";
 import { KenaikanPage } from "./features/kelulusan/KenaikanPage";
 import { SertifikatSayaPage } from "./features/kelulusan/SertifikatSayaPage";
+import { PlatformLoginPage } from "./features/platform/PlatformLoginPage";
+import { PlatformPage } from "./features/platform/PlatformPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const location = useLocation();
   if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  // Super admin hanya punya dashboard platform, tidak punya halaman sekolah.
+  if (user.role === "superadmin") return <Navigate to="/platform" replace />;
+  return <>{children}</>;
+}
+
+function RequirePlatform({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  if (user?.role !== "superadmin") return <Navigate to="/platform/login" replace />;
   return <>{children}</>;
 }
 
@@ -55,6 +65,15 @@ export function App() {
     <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "")}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/platform/login" element={<PlatformLoginPage />} />
+        <Route
+          path="/platform"
+          element={
+            <RequirePlatform>
+              <PlatformPage />
+            </RequirePlatform>
+          }
+        />
         <Route
           element={
             <RequireAuth>

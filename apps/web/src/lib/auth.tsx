@@ -16,6 +16,8 @@ type AuthContextValue = {
   token: string | null;
   user: User | null;
   login: (schoolSlug: string, email: string, password: string) => Promise<void>;
+  /** Login super admin platform (tanpa slug sekolah). */
+  loginPlatform: (email: string, password: string) => Promise<void>;
   logout: () => void;
 };
 
@@ -57,6 +59,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(next);
   }, []);
 
+  const loginPlatform = useCallback(async (email: string, password: string) => {
+    const res = await api<{ token: string; user: { id: string; name: string; email: string; role: string } }>(
+      "/platform/login",
+      { method: "POST", body: { email, password } },
+    );
+    const next: Session = {
+      token: res.token,
+      user: { ...res.user, school_id: "", school_name: "Platform" },
+    };
+    writeStoredSession(next);
+    setSession(next);
+  }, []);
+
   const logout = useCallback(() => {
     writeStoredSession(null);
     setSession(null);
@@ -67,9 +82,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       token: session?.token ?? null,
       user: session?.user ?? null,
       login,
+      loginPlatform,
       logout,
     }),
-    [session, login, logout],
+    [session, login, loginPlatform, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

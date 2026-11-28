@@ -495,7 +495,7 @@ pub async fn download(
             .await?;
             teaches.is_some()
         }
-        Role::OrangTua => false,
+        Role::OrangTua | Role::SuperAdmin => false,
     };
     if !allowed {
         return Err(AppError::Forbidden);

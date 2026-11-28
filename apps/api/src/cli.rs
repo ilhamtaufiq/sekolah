@@ -79,3 +79,30 @@ fn flag(args: &[String], name: &str) -> Result<String> {
         .map(|w| w[1].clone())
         .with_context(|| format!("flag {name} wajib diisi"))
 }
+
+/// Membuat akun super admin platform (dashboard lintas sekolah).
+/// Contoh: simas-api create-platform-admin --email admin@platform.id --name "Super Admin" --password "..."
+pub async fn create_platform_admin(pool: &MySqlPool, args: &[String]) -> Result<()> {
+    let email = flag(args, "--email")?.trim().to_lowercase();
+    let name = flag(args, "--name")?.trim().to_string();
+    let password = flag(args, "--password")?;
+
+    if password.chars().count() < 8 {
+        bail!("password minimal 8 karakter");
+    }
+
+    let hash = hash_password(&password)?;
+    sqlx::query(
+        "INSERT INTO platform_admins (id, email, name, password_hash) VALUES (?, ?, ?, ?)",
+    )
+    .bind(Uuid::new_v4())
+    .bind(&email)
+    .bind(&name)
+    .bind(&hash)
+    .execute(pool)
+    .await
+    .context("gagal membuat akun platform (mungkin email sudah terdaftar)")?;
+
+    println!("akun platform '{email}' dibuat");
+    Ok(())
+}

@@ -179,7 +179,7 @@ pub async fn download(
     let allowed = match user.role {
         Role::Admin | Role::KepalaSekolah => true,
         Role::Siswa => owner == Some(user.user_id),
-        Role::Guru | Role::WaliKelas | Role::OrangTua => false,
+        Role::Guru | Role::WaliKelas | Role::OrangTua | Role::SuperAdmin => false,
     };
     if !allowed {
         return Err(AppError::Forbidden);

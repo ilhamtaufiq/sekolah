@@ -5,7 +5,7 @@ use axum::{
 };
 use tower_http::trace::TraceLayer;
 
-use crate::{academic, auth, exams, grades, health, kelulusan, lms, report_format, state::AppState};
+use crate::{academic, auth, exams, grades, health, kelulusan, lms, platform, report_format, state::AppState};
 
 pub fn build(state: AppState) -> Router {
     Router::new()
@@ -295,6 +295,10 @@ pub fn build(state: AppState) -> Router {
             "/api/cetak-massal/jobs/{id}/unduh",
             get(crate::cetak::jobs::download),
         )
+        // Dashboard super admin platform (lintas sekolah)
+        .route("/api/platform/login", post(platform::login))
+        .route("/api/platform/me", get(platform::me))
+        .route("/api/platform/schools", get(platform::schools))
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }

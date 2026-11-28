@@ -163,7 +163,7 @@ pub async fn rooms(State(st): State<AppState>, user: AuthUser) -> AppResult<Json
             .bind(user.school_id)
             .fetch_all(&st.pool)
             .await?,
-            Role::KepalaSekolah | Role::OrangTua => return Err(AppError::Forbidden),
+            Role::KepalaSekolah | Role::OrangTua | Role::SuperAdmin => return Err(AppError::Forbidden),
         };
     Ok(Json(rows))
 }
