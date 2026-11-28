@@ -30,6 +30,14 @@ LAST = ["Pratama", "Saputra", "Lestari", "Wijaya", "Hidayat", "Ramadhani", "Nugr
 TEACHER_NAMES = ["Ibu Ratna", "Pak Surya", "Ibu Dian", "Pak Hendra", "Ibu Melati"]
 
 
+# Cloudflare memblokir User-Agent default Python (error 1010). Header ini membuat
+# permintaan skrip terbaca sebagai browser biasa. Dipakai atas izin pemilik server.
+BROWSER_USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+)
+
+
 class Api:
     def __init__(self, base, token=None):
         self.base = base.rstrip("/")
@@ -39,6 +47,7 @@ class Api:
         data = json.dumps(body).encode() if body is not None else None
         req = urllib.request.Request(self.base + path, data=data, method=method)
         req.add_header("content-type", "application/json")
+        req.add_header("user-agent", BROWSER_USER_AGENT)
         tok = token or self.token
         if tok:
             req.add_header("authorization", f"Bearer {tok}")
