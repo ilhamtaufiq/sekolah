@@ -1,35 +1,50 @@
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
+import type { InputHTMLAttributes, ReactNode } from "react";
 import { Link } from "react-router";
-import { Button as UIButton } from "@/components/ui/button";
+import { Button as AriaButton, LinkButton, type buttonVariants } from "@/components/ui/button";
+import type { VariantProps } from "class-variance-authority";
 import { Input as UIInput } from "@/components/ui/input";
 import { Card as UICard, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table as UITable, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import { Progress, ProgressIndicator, ProgressTrack } from "@/components/ui/progress";
+import { Alert as UIAlert, AlertDescription } from "@/components/ui/alert";
+import { cn } from "cn";
 
 /*
- * Lapisan adaptor di atas komponen shadcn (components/ui). Halaman-halaman
- * lama memakai API di file ini; nama dan propertinya dipertahankan supaya
- * tidak perlu diubah satu per satu.
+ * Lapisan adaptor di atas komponen dari next-shadcn-admin-dashboard-aria (MIT).
+ * API lama dipertahankan: onClick -> onPress, render={<Link to />} -> href,
+ * dan nama varian lama (primary, danger, secondary) dipetakan.
  */
 
 export { cn };
 
-type ButtonVariant = "default" | "outline" | "secondary" | "ghost" | "destructive" | "link";
+type ButtonVariant = NonNullable<VariantProps<typeof buttonVariants>["variant"]>;
+type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>["size"]>;
 
-// Nama varian lama dari kode yang sudah ada.
 const legacyVariant: Record<string, ButtonVariant> = {
   primary: "default",
   danger: "destructive",
-  secondary: "outline",
 };
 
-type ButtonProps = Omit<React.ComponentProps<typeof UIButton>, "variant"> & {
-  variant?: ButtonVariant | "primary" | "danger" | "secondary";
+type ButtonProps = {
+  variant?: ButtonVariant | "primary" | "danger";
+  size?: ButtonSize;
+  className?: string;
+  disabled?: boolean;
+  type?: "button" | "submit" | "reset";
+  children?: ReactNode;
+  onClick?: () => void | Promise<void> | undefined;
+  "aria-label"?: string;
+  render?: React.ReactElement<{ to?: string }>;
+  asChild?: boolean;
 };
 
-export function Button({ variant = "default", ...props }: ButtonProps) {
+/** Tombol. Jika `render` berisi <Link to="..."/>, dirender sebagai tautan (lewat RouterProvider). */
+export function Button({ variant = "default", size = "default", onClick, render, ...props }: ButtonProps) {
   const resolved = legacyVariant[variant] ?? (variant as ButtonVariant);
-  return <UIButton variant={resolved} {...props} />;
+  const to = render?.props.to;
+  if (to) {
+    return <LinkButton variant={resolved} size={size} href={to} {...props} />;
+  }
+  return <AriaButton variant={resolved} size={size} onPress={() => onClick?.()} {...props} />;
 }
 
 /** Judul halaman yang seragam: label kecil, judul, deskripsi singkat, dan aksi di kanan. */
@@ -112,13 +127,17 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
   return <UIInput {...props} className={className} />;
 }
 
-// Select tetap elemen native, dengan tampilan yang sama dengan Input.
-const selectBase =
-  "border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 flex h-8 w-full min-w-0 rounded-lg border px-2.5 py-1 pr-8 text-sm outline-none focus-visible:ring-3 disabled:cursor-not-allowed disabled:opacity-50";
-
-export function Select({ className, children, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
+/** Select tetap elemen native dengan gaya yang sama dengan input. */
+export function Select({ className, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <select data-slot="select" {...props} className={cn(selectBase, className)}>
+    <select
+      data-slot="select"
+      {...props}
+      className={cn(
+        "border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 flex h-8 w-full min-w-0 rounded-lg border px-2.5 py-1 pr-8 text-sm outline-none focus-visible:ring-3 disabled:cursor-not-allowed disabled:opacity-50",
+        className,
+      )}
+    >
       {children}
     </select>
   );
@@ -148,13 +167,12 @@ export function Card({
 }
 
 export function Alert({ tone, children }: { tone: "error" | "info" | "success" | "warning"; children: ReactNode }) {
-  const styles = {
-    error: "border-destructive/30 bg-destructive/5 text-destructive",
-    info: "border-primary/20 bg-primary/5 text-primary",
-    success: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    warning: "border-amber-200 bg-amber-50 text-amber-800",
-  }[tone];
-  return <div role={tone === "error" ? "alert" : undefined} className={cn("rounded-lg border px-4 py-3 text-sm", styles)}>{children}</div>;
+  const variant = tone === "error" ? "destructive" : "default";
+  return (
+    <UIAlert variant={variant} role={tone === "error" ? "alert" : undefined}>
+      <AlertDescription>{children}</AlertDescription>
+    </UIAlert>
+  );
 }
 
 export function ErrorAlert({ error }: { error: unknown }) {
@@ -177,26 +195,45 @@ export function ErrorAlert({ error }: { error: unknown }) {
   );
 }
 
+/* Tabel HTML biasa. Komponen Table di components/ui memakai react-aria dan berbasis koleksi,
+   sehingga baris <tr> tidak bisa langsung dimasukkan di sana. Kelasnya sama dengan komponen aslinya. */
 export function Table({ head, children }: { head: ReactNode[]; children: ReactNode }) {
   return (
-    <div data-slot="table-container" className="overflow-x-auto rounded-lg border bg-card">
-      <UITable>
-        <TableHeader className="bg-muted/60">
-          <TableRow className="hover:bg-transparent">
+    <div data-slot="table-container" className="relative w-full overflow-x-auto rounded-lg border bg-card">
+      <table className="w-full caption-bottom text-sm">
+        <thead className="bg-muted/60 [&_tr]:border-b">
+          <tr className="border-b transition-colors">
             {head.map((h, i) => (
-              <TableHead key={i} className="whitespace-nowrap px-4 text-xs font-medium text-muted-foreground">
+              <th key={i} className="h-10 whitespace-nowrap px-4 text-start align-middle text-xs font-medium text-muted-foreground">
                 {h}
-              </TableHead>
+              </th>
             ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>{children}</TableBody>
-      </UITable>
+          </tr>
+        </thead>
+        <tbody className="[&_tr:last-child]:border-0 [&>tr]:border-b [&>tr:hover]:bg-muted/50">{children}</tbody>
+      </table>
     </div>
   );
 }
 
-export { TableCell, TableRow };
+export function TableRow(props: React.HTMLAttributes<HTMLTableRowElement>) {
+  return <tr className="border-b transition-colors hover:bg-muted/50" {...props} />;
+}
+
+export function TableCell(props: React.TdHTMLAttributes<HTMLTableCellElement>) {
+  return <td className="whitespace-nowrap p-4 align-middle" {...props} />;
+}
+
+/** Bilah progres sederhana dengan nilai 0–100. */
+export function ProgressBar({ value, className }: { value: number; className?: string }) {
+  return (
+    <Progress value={value} className={className}>
+      <ProgressTrack>
+        <ProgressIndicator />
+      </ProgressTrack>
+    </Progress>
+  );
+}
 
 /** Kontrol halaman di bawah tabel. Menerima hasil dari usePagination. */
 export function Pagination({

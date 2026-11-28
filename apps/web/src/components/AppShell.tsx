@@ -1,165 +1,91 @@
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
+import { useMemo } from "react";
+import { Outlet } from "react-router";
+import { cn } from "cn";
 import { useAuth } from "../lib/auth";
-import { Button } from "./kit";
-import { Header } from "./layout-header";
-import { Main } from "./layout-main";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarRail,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+import { Toaster } from "@/components/ui/sonner";
+import { AppSidebar } from "@/components/layout/sidebar/app-sidebar";
+import { AccountSwitcher } from "@/components/layout/header/account-switcher";
+import { GitHubRepositoriesMenu } from "@/components/layout/header/github-repositories-menu";
+import { LayoutControls } from "@/components/layout/header/layout-controls";
+import { SearchDialog } from "@/components/layout/header/search-dialog";
+import { ThemeSwitcher } from "@/components/layout/header/theme-switcher";
+import { ReactAriaRouterProvider } from "@/components/layout/react-aria-router-provider";
 
-const STAFF = ["admin", "kepala_sekolah", "guru", "wali_kelas"];
-const LEADERSHIP = ["admin", "kepala_sekolah"];
-const TEACHING = ["admin", "guru", "wali_kelas"];
-
-type NavItem = { to: string; label: string; roles: string[]; end?: boolean };
-type NavGroup = { title: string; items: NavItem[] };
-
-// Menu dikelompokkan per pekerjaan, supaya admin tidak melihat satu baris panjang.
-const groups: NavGroup[] = [
-  {
-    title: "Ringkasan",
-    items: [{ to: "/", label: "Beranda", roles: [...STAFF, "siswa"], end: true }],
-  },
-  {
-    title: "Akademik",
-    items: [
-      { to: "/tahun-ajaran", label: "Tahun ajaran", roles: LEADERSHIP },
-      { to: "/mapel", label: "Mapel", roles: LEADERSHIP },
-      { to: "/kelas", label: "Kelas", roles: STAFF },
-      { to: "/siswa", label: "Siswa", roles: STAFF },
-      { to: "/staf", label: "Guru & staf", roles: LEADERSHIP },
-      { to: "/jadwal", label: "Jadwal", roles: STAFF },
-    ],
-  },
-  {
-    title: "Harian",
-    items: [
-      { to: "/absensi", label: "Absensi", roles: STAFF },
-      { to: "/jurnal", label: "Jurnal mengajar", roles: TEACHING },
-      { to: "/persetujuan-jurnal", label: "Persetujuan jurnal", roles: LEADERSHIP },
-      { to: "/nilai", label: "Input nilai", roles: TEACHING },
-    ],
-  },
-  {
-    title: "Raport & kelulusan",
-    items: [
-      { to: "/raport", label: "Raport", roles: STAFF },
-      { to: "/cetak-massal", label: "Cetak massal", roles: ["admin", "wali_kelas"] },
-      { to: "/kenaikan", label: "Kenaikan kelas", roles: ["admin"] },
-      { to: "/pengaturan/format-raport", label: "Format raport", roles: STAFF },
-    ],
-  },
-  {
-    title: "Pembelajaran",
-    items: [
-      { to: "/ruang-kelas", label: "Ruang kelas", roles: [...STAFF, "siswa"] },
-      { to: "/bank-soal", label: "Bank soal", roles: TEACHING },
-      { to: "/ujian", label: "Ujian", roles: TEACHING },
-    ],
-  },
-  {
-    title: "Pengaturan",
-    items: [{ to: "/pengaturan/profil", label: "Profil sekolah", roles: ["admin"] }],
-  },
-  {
-    title: "Murid",
-    items: [
-      { to: "/ujian-saya", label: "Ujian saya", roles: ["siswa"] },
-      { to: "/raport-saya", label: "Raport saya", roles: ["siswa"] },
-      { to: "/sertifikat-saya", label: "Sertifikat saya", roles: ["siswa"] },
-    ],
-  },
-];
-
-
-/** Item menu yang menandai halaman aktif. */
-function NavItem({ to, end, label }: { to: string; end?: boolean; label: string }) {
-  const { pathname } = useLocation();
-  const active = end ? pathname === to : pathname === to || pathname.startsWith(`${to}/`);
-  return (
-    <SidebarMenuButton isActive={active} render={<NavLink to={to} end={end} />}>
-      {label}
-    </SidebarMenuButton>
-  );
-}
-
+/**
+ * Layout dashboard dari next-shadcn-admin-dashboard-aria (MIT), dengan data user dan menu SCHID.
+ */
 export function AppShell() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const role = user?.role ?? "";
+  const { user } = useAuth();
+
+  // Pemilih akun hanya berisi user yang sedang login.
+  const accounts = useMemo(
+    () =>
+      user
+        ? [
+            {
+              id: user.id,
+              name: user.name,
+              username: user.email.split("@")[0],
+              email: user.email,
+              avatar: "",
+              role: user.role,
+            },
+          ]
+        : [],
+    [user],
+  );
 
   return (
-    <SidebarProvider>
-      <Sidebar collapsible="icon" variant="inset">
-        <SidebarHeader>
-          <div className="flex items-center gap-2.5 px-2 py-1.5">
-            <img src={`${import.meta.env.BASE_URL}logo-mark.png`} alt="" className="size-8 object-contain" />
-            <div className="grid min-w-0 flex-1 text-start leading-tight group-data-[collapsible=icon]:hidden">
-              <span className="truncate font-semibold">SCHID</span>
-              <span className="truncate text-xs text-muted-foreground">{user?.school_name}</span>
-            </div>
-          </div>
-        </SidebarHeader>
-
-        <SidebarContent>
-          {groups.map((group) => {
-            const items = group.items.filter((item) => item.roles.includes(role));
-            if (items.length === 0) return null;
-            return (
-              <SidebarGroup key={group.title} className="py-1">
-                <SidebarGroupLabel className="h-7">{group.title}</SidebarGroupLabel>
-                <SidebarMenu>
-                  {items.map((item) => (
-                    <SidebarMenuItem key={item.to}>
-                      <NavItem to={item.to} end={item.end} label={item.label} />
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroup>
-            );
-          })}
-        </SidebarContent>
-
-        <SidebarFooter>
-          <div className="px-2 py-1 group-data-[collapsible=icon]:hidden">
-            <p className="truncate text-sm font-medium">{user?.name}</p>
-            <p className="truncate text-xs text-muted-foreground">{user?.role}</p>
-          </div>
-          <Button
-            variant="ghost"
-            className="w-full justify-start group-data-[collapsible=icon]:justify-center"
-            onClick={() => {
-              logout();
-              navigate("/login", { replace: true });
-            }}
+    <ReactAriaRouterProvider>
+      <SidebarProvider
+        defaultOpen
+        style={
+          {
+            "--sidebar-width": "calc(var(--spacing) * 68)",
+          } as React.CSSProperties
+        }
+      >
+        <AppSidebar variant="inset" collapsible="icon" />
+        <SidebarInset
+          className={cn(
+            "[html[data-content-layout=centered]_&>*]:mx-auto",
+            "[html[data-content-layout=centered]_&>*]:w-full",
+            "[html[data-content-layout=centered]_&>*]:max-w-screen-2xl",
+            "peer-data-[variant=inset]:border",
+            "min-w-0 overflow-x-clip",
+          )}
+        >
+          <header
+            className={cn(
+              "flex h-12 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12",
+              "[html[data-navbar-style=sticky]_&]:bg-background/50 [html[data-navbar-style=sticky]_&]:sticky [html[data-navbar-style=sticky]_&]:top-0 [html[data-navbar-style=sticky]_&]:z-50 [html[data-navbar-style=sticky]_&]:overflow-hidden [html[data-navbar-style=sticky]_&]:rounded-t-[inherit] [html[data-navbar-style=sticky]_&]:backdrop-blur-md",
+            )}
           >
-            Keluar
-          </Button>
-        </SidebarFooter>
-        <SidebarRail />
-      </Sidebar>
-
-      <SidebarInset>
-        <Header fixed>
-          <span className="truncate text-sm text-muted-foreground">{user?.school_name}</span>
-        </Header>
-        <Main>
-          <div className="mx-auto w-full max-w-5xl">
+            <div className="flex w-full items-center justify-between px-4 lg:px-6">
+              <div className="flex items-center gap-1 lg:gap-2">
+                <SidebarTrigger className="-ml-1" />
+                <Separator
+                  orientation="vertical"
+                  className="mx-2 data-[orientation=vertical]:h-4 data-[orientation=vertical]:self-center"
+                />
+                <SearchDialog />
+              </div>
+              <div className="flex items-center gap-2">
+                <LayoutControls />
+                <ThemeSwitcher />
+                <GitHubRepositoriesMenu />
+                <AccountSwitcher users={accounts} />
+              </div>
+            </div>
+          </header>
+          <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden p-4 md:p-6">
             <Outlet />
           </div>
-        </Main>
-      </SidebarInset>
-    </SidebarProvider>
+        </SidebarInset>
+      </SidebarProvider>
+      <Toaster />
+    </ReactAriaRouterProvider>
   );
 }

@@ -1,11 +1,11 @@
-
+"use client"
 
 import * as React from "react"
+import { cn } from "cn"
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
 } from "embla-carousel-react"
 
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 
@@ -185,14 +185,14 @@ function CarouselPrevious({
       variant={variant}
       size={size}
       className={cn(
-        "cn-carousel-previous absolute touch-manipulation rounded-full",
+        "absolute touch-manipulation rounded-full",
         orientation === "horizontal"
-          ? "top-1/2 -left-12 -translate-y-1/2"
+          ? "inset-y-0 -left-12 my-auto"
           : "-top-12 left-1/2 -translate-x-1/2 rotate-90",
         className
       )}
-      disabled={!canScrollPrev}
-      onClick={scrollPrev}
+      isDisabled={!canScrollPrev}
+      onPress={scrollPrev}
       {...props}
     >
       <ChevronLeftIcon />
@@ -215,14 +215,14 @@ function CarouselNext({
       variant={variant}
       size={size}
       className={cn(
-        "cn-carousel-next absolute touch-manipulation rounded-full",
+        "absolute touch-manipulation rounded-full",
         orientation === "horizontal"
-          ? "top-1/2 -right-12 -translate-y-1/2"
+          ? "inset-y-0 -right-12 my-auto"
           : "-bottom-12 left-1/2 -translate-x-1/2 rotate-90",
         className
       )}
-      disabled={!canScrollNext}
-      onClick={scrollNext}
+      isDisabled={!canScrollNext}
+      onPress={scrollNext}
       {...props}
     >
       <ChevronRightIcon />

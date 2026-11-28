@@ -1,5 +1,5 @@
 import { BookOpenCheck, Megaphone, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "../../components/kit";
 import { AssignmentStatus } from "./academy/assignment-status";
 import { ClassSchedule } from "./academy/class-schedule";
 import { KpiCards } from "./academy/kpi-cards";
